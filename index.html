@@ -268,22 +268,40 @@
       background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);
     }
     .msg-row{display:flex;margin:6px 0;}
-    .msg-row.me{justify-content:flex-end;}
-    .bubble{
-      max-width: 78%;
-      padding: 10px 12px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.35;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
-      border: 1px solid rgba(0,0,0,0.04);
-      background: white;
-
-      white-space: pre-wrap;
-      overflow-wrap: break-word;
-      word-break: normal;
+    .msg-wrap{
+      display:flex;
+      flex-direction:column;
+      max-width:78%;
     }
+
+    .msg-row.me .msg-wrap{ align-items:flex-end; }
+    .msg-row.other .msg-wrap{ align-items:flex-start; }
+
+    /* Bubble tự co theo nội dung nhưng không quá nhỏ */
+    .bubble{
+      display:inline-block;
+      width:fit-content;
+      max-width:100%;
+      min-width:44px;
+
+      padding:10px 12px;
+      border-radius:16px;
+      font-size:14px;
+      line-height:1.35;
+
+      box-shadow:0 6px 16px rgba(0,0,0,0.06);
+      border:1px solid rgba(0,0,0,0.04);
+      background:#fff;
+
+      /* ✅ giữ 1 dòng khi ngắn, vẫn xuống dòng khi dài */
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:normal;
+    }
+    .msg-row.me{justify-content:flex-end;}
+    
     .msg-row.me .bubble{background:#dbeafe;border-color:rgba(37,99,235,0.18);}
+    .msg-row.other .bubble{background:#dbeafe;border-color:rgba(37,99,235,0.18);}
     .msg-time{font-size:10px;color:#64748b;margin-top:4px;text-align:right;}
     .chat-foot{
       padding:10px;display:flex;gap:8px;
@@ -594,7 +612,9 @@
     function updateMyPos(pos){
       lastPos = { lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now() };
       upsertMyMarker(lastPos.lat,lastPos.lng);
-      if(routingToUid) drawRouteTo(routingToUid);
+
+      // ✅ realtime route nhưng KHÔNG fitBounds
+      if(routingToUid) drawRouteTo(routingToUid, false);
     }
 
     function startGeolocationWatch(){
@@ -629,37 +649,42 @@
     }
     $("btnClearRoute").onclick=()=>clearRoute();
 
-    async function startRoutingTo(fid){
-      routingToUid=fid;
-      setTab("map");
-      await drawRouteTo(fid);
+   async function startRoutingTo(fid){
+  routingToUid = fid;
+  setTab("map");
+  await drawRouteTo(fid, true); // ✅ chỉ fit lần đầu
+}
+
+async function drawRouteTo(fid, fit=false){
+  try{
+    if(!lastPos) return toast("Chưa có vị trí của bạn");
+    const f = friendLocs.get(fid);
+    if(!f) return toast("Chưa có dữ liệu vị trí bạn bè");
+    if(!f.sharing) return toast("Bạn bè đang ẩn vị trí");
+    if(typeof f.lat !== "number" || typeof f.lng !== "number") return toast("Bạn bè chưa gửi vị trí");
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${lastPos.lng},${lastPos.lat};${f.lng},${f.lat}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
+
+    const coords = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+
+    if(routeLayer) map.removeLayer(routeLayer);
+    routeLayer = L.polyline(coords).addTo(map);
+
+    // ✅ CHỈ fitBounds khi bắt đầu chỉ đường
+    if(fit){
+      map.fitBounds(routeLayer.getBounds(), { padding:[40,40] });
     }
 
-    async function drawRouteTo(fid){
-      try{
-        if(!lastPos) return toast("Chưa có vị trí của bạn");
-        const f = friendLocs.get(fid);
-       if (!f) return toast("Chưa có dữ liệu vị trí bạn bè");
-        if (!f.sharing) return toast("Bạn bè đang ẩn vị trí");
-        if (typeof f.lat !== "number" || typeof f.lng !== "number") return toast("Bạn bè chưa gửi vị trí (chưa có GPS)");
-
-        const url = `https://router.project-osrm.org/route/v1/driving/${lastPos.lng},${lastPos.lat};${f.lng},${f.lat}?overview=full&geometries=geojson`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if(!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
-
-        const coords = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-        if(routeLayer) map.removeLayer(routeLayer);
-        routeLayer = L.polyline(coords).addTo(map);
-        map.fitBounds(routeLayer.getBounds(), { padding:[40,40] });
-
-        const km = ((data.routes[0].distance||0)/1000).toFixed(1);
-        const mins = Math.round((data.routes[0].duration||0)/60);
-        toast(`🧭 ${km} km • ~${mins} phút`);
-      }catch(e){
-        toast("Lỗi chỉ đường: " + (e.message||"unknown"));
-      }
-    }
+    const km = ((data.routes[0].distance||0)/1000).toFixed(1);
+    const mins = Math.round((data.routes[0].duration||0)/60);
+    toast(`🧭 ${km} km • ~${mins} phút`);
+  }catch(e){
+    toast("Lỗi chỉ đường: " + (e.message||"unknown"));
+  }
+}
 
     // ===== Firestore Helpers =====
     async function ensureUserDoc(user){
@@ -948,27 +973,31 @@
       }catch{return "";}
     }
 
-    function appendMessage(m){
+  function appendMessage(m){
       const isMe = m.from === me.uid;
-      const row=document.createElement("div");
-      row.className="msg-row " + (isMe ? "me":"other");
 
-      const bubble=document.createElement("div");
-      bubble.className="bubble";
-      bubble.textContent=m.text||"";
+      const row = document.createElement("div");
+      row.className = "msg-row " + (isMe ? "me" : "other");
 
-      const time=document.createElement("div");
-      time.className="msg-time";
+      const wrap = document.createElement("div");
+      wrap.className = "msg-wrap";
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = (m.text || "").trim();
+
+      const time = document.createElement("div");
+      time.className = "msg-time";
       time.textContent = (typeof m.ts==="number") ? fmtTime(m.ts) : "";
 
-      const wrap=document.createElement("div");
       wrap.appendChild(bubble);
       wrap.appendChild(time);
-
       row.appendChild(wrap);
       chatBody.appendChild(row);
+
       chatBody.scrollTop = chatBody.scrollHeight;
     }
+
 
     function openChat(uid){
       if(!me) return;
