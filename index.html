@@ -2,7 +2,6 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,7 +39,7 @@
       font-family:'Inter',sans-serif;
       background:var(--bg-color);
       color:var(--text-main);
-      height:100dvh;         /* ✅ iOS/Safari stable */
+      height:100dvh;
       overflow:hidden;
     }
     .hidden{display:none!important;}
@@ -65,7 +64,7 @@
       border:1px solid #cbd5e1;
       color:var(--text-main);
       padding:14px;border-radius:12px;
-      outline:none;font-size:16px; /* ✅ iOS tránh zoom */
+      outline:none;font-size:16px;
       transition:border-color .2s;
     }
     .inp:focus{border-color:var(--primary);background:#fff;}
@@ -124,7 +123,7 @@
     .view-container{
       position:absolute;inset:0;
       overflow-y:auto;
-      padding:calc(70px + var(--safe-t)) 16px calc(140px + var(--safe-b)); /* ✅ chừa chỗ bottom bar nổi */
+      padding:calc(70px + var(--safe-t)) 16px calc(140px + var(--safe-b));
       background:#f1f5f9;
     }
     #viewMap.view-container{padding:0;background:transparent;bottom:0;overflow:hidden;}
@@ -185,7 +184,6 @@
     .profile-name{font-size:18px;font-weight:800;}
     .profile-email{color:var(--text-muted);font-size:13px;}
 
-    /* ✅ Bottom nav nổi lên tránh Home Indicator */
     .bottom-nav{
       position:absolute;
       left:12px; right:12px;
@@ -263,21 +261,26 @@
     .chat-title{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .chat-sub{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+    /* ===== CHAT (FIX) ===== */
     .chat-body{
-      flex:1;padding:12px;overflow-y:auto;
+      flex:1;
+      padding:12px;
+      overflow-y:auto;
       background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);
     }
     .msg-row{display:flex;margin:6px 0;}
+    .msg-row.me{justify-content:flex-end;}
+    .msg-row.other{justify-content:flex-start;}
+
     .msg-wrap{
       display:flex;
       flex-direction:column;
+      width:fit-content;
       max-width:78%;
     }
+    .msg-row.me .msg-wrap{align-items:flex-end;}
+    .msg-row.other .msg-wrap{align-items:flex-start;}
 
-    .msg-row.me .msg-wrap{ align-items:flex-end; }
-    .msg-row.other .msg-wrap{ align-items:flex-start; }
-
-    /* Bubble tự co theo nội dung nhưng không quá nhỏ */
     .bubble{
       display:inline-block;
       width:fit-content;
@@ -293,16 +296,18 @@
       border:1px solid rgba(0,0,0,0.04);
       background:#fff;
 
-      /* ✅ giữ 1 dòng khi ngắn, vẫn xuống dòng khi dài */
+      /* ✅ ngắn thì 1 dòng, dài thì tự xuống */
       white-space:normal;
       overflow-wrap:anywhere;
       word-break:normal;
     }
-    .msg-row.me{justify-content:flex-end;}
-    
-    .msg-row.me .bubble{background:#dbeafe;border-color:rgba(37,99,235,0.18);}
-    .msg-row.other .bubble{background:#dbeafe;border-color:rgba(37,99,235,0.18);}
+    .msg-row.me .bubble{
+      background:#dbeafe;
+      border-color:rgba(37,99,235,0.18);
+    }
+
     .msg-time{font-size:10px;color:#64748b;margin-top:4px;text-align:right;}
+
     .chat-foot{
       padding:10px;display:flex;gap:8px;
       border-top:1px solid rgba(0,0,0,0.06);
@@ -310,7 +315,7 @@
     }
     .chat-input{
       flex:1;border:1px solid #cbd5e1;background:#fff;
-      border-radius:14px;padding:10px 12px;outline:none;font-size:16px; /* ✅ */
+      border-radius:14px;padding:10px 12px;outline:none;font-size:16px;
     }
 
     .pop{display:flex;gap:10px;align-items:center;}
@@ -324,7 +329,9 @@
     .pop-actions{display:flex;gap:8px;margin-top:10px;}
     .pop-actions button{padding:8px 10px;font-size:12px;border-radius:12px;}
 
-    @media (max-width:420px){.bubble{max-width:86%;}}
+    @media (max-width:420px){
+      .msg-wrap{max-width:86%;}
+    }
   </style>
 </head>
 
@@ -613,7 +620,7 @@
       lastPos = { lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now() };
       upsertMyMarker(lastPos.lat,lastPos.lng);
 
-      // ✅ realtime route nhưng KHÔNG fitBounds
+      // ✅ realtime route nhưng KHÔNG auto zoom ra (không fitBounds)
       if(routingToUid) drawRouteTo(routingToUid, false);
     }
 
@@ -649,42 +656,41 @@
     }
     $("btnClearRoute").onclick=()=>clearRoute();
 
-   async function startRoutingTo(fid){
-  routingToUid = fid;
-  setTab("map");
-  await drawRouteTo(fid, true); // ✅ chỉ fit lần đầu
-}
-
-async function drawRouteTo(fid, fit=false){
-  try{
-    if(!lastPos) return toast("Chưa có vị trí của bạn");
-    const f = friendLocs.get(fid);
-    if(!f) return toast("Chưa có dữ liệu vị trí bạn bè");
-    if(!f.sharing) return toast("Bạn bè đang ẩn vị trí");
-    if(typeof f.lat !== "number" || typeof f.lng !== "number") return toast("Bạn bè chưa gửi vị trí");
-
-    const url = `https://router.project-osrm.org/route/v1/driving/${lastPos.lng},${lastPos.lat};${f.lng},${f.lat}?overview=full&geometries=geojson`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if(!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
-
-    const coords = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-
-    if(routeLayer) map.removeLayer(routeLayer);
-    routeLayer = L.polyline(coords).addTo(map);
-
-    // ✅ CHỈ fitBounds khi bắt đầu chỉ đường
-    if(fit){
-      map.fitBounds(routeLayer.getBounds(), { padding:[40,40] });
+    async function startRoutingTo(fid){
+      routingToUid = fid;
+      setTab("map");
+      await drawRouteTo(fid, true); // ✅ chỉ fit 1 lần khi bắt đầu
     }
 
-    const km = ((data.routes[0].distance||0)/1000).toFixed(1);
-    const mins = Math.round((data.routes[0].duration||0)/60);
-    toast(`🧭 ${km} km • ~${mins} phút`);
-  }catch(e){
-    toast("Lỗi chỉ đường: " + (e.message||"unknown"));
-  }
-}
+    async function drawRouteTo(fid, fit=false){
+      try{
+        if(!lastPos) return toast("Chưa có vị trí của bạn");
+        const f = friendLocs.get(fid);
+        if(!f) return toast("Chưa có dữ liệu vị trí bạn bè");
+        if(!f.sharing) return toast("Bạn bè đang ẩn vị trí");
+        if(typeof f.lat !== "number" || typeof f.lng !== "number") return toast("Bạn bè chưa gửi vị trí");
+
+        const url = `https://router.project-osrm.org/route/v1/driving/${lastPos.lng},${lastPos.lat};${f.lng},${f.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if(!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
+
+        const coords = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+        if(routeLayer) map.removeLayer(routeLayer);
+        routeLayer = L.polyline(coords).addTo(map);
+
+        // ✅ KHÔNG auto zoom ra khi realtime update
+        if(fit){
+          map.fitBounds(routeLayer.getBounds(), { padding:[40,40] });
+        }
+
+        const km = ((data.routes[0].distance||0)/1000).toFixed(1);
+        const mins = Math.round((data.routes[0].duration||0)/60);
+        toast(`🧭 ${km} km • ~${mins} phút`);
+      }catch(e){
+        toast("Lỗi chỉ đường: " + (e.message||"unknown"));
+      }
+    }
 
     // ===== Firestore Helpers =====
     async function ensureUserDoc(user){
@@ -732,18 +738,13 @@ async function drawRouteTo(fid, fit=false){
 
       if (me) {
         const payload = { sharing, updatedAt: serverTimestamp() };
-
-        // ✅ nếu đang bật share và đã có vị trí thì đẩy lat/lng lên NGAY
-        if (sharing && lastPos) {
-          payload.lat = lastPos.lat;
-          payload.lng = lastPos.lng;
-        }
-
+        if (sharing && lastPos) { payload.lat = lastPos.lat; payload.lng = lastPos.lng; }
         await setDoc(doc(db, "locations", me.uid), payload, { merge: true });
       }
       if(lastPos && me) upsertMyMarker(lastPos.lat,lastPos.lng);
     }
 
+    // ✅ gửi vị trí tối đa mỗi 5s (interval 2s nhưng có throttle 5s)
     setInterval(async ()=>{
       if(!me || !sharing || !lastPos) return;
       const now=Date.now();
@@ -810,9 +811,9 @@ async function drawRouteTo(fid, fit=false){
             await updateDoc(doc(db,"friendRequests",d.id),{status:"accepted"});
             const fid = friendDocId(me.uid, r.from);
             await setDoc(doc(db, "friends", fid), {
-              a: me.uid,                // ✅ thêm dòng này
-              b: r.from,                // ✅ thêm dòng này
-              uids: [me.uid, r.from],   // giữ nguyên
+              a: me.uid,
+              b: r.from,
+              uids: [me.uid, r.from],
               users: { [me.uid]: true, [r.from]: true },
               createdAt: serverTimestamp()
             }, { merge: true });
@@ -835,34 +836,43 @@ async function drawRouteTo(fid, fit=false){
       if(unsubLocs.has(fid)) return;
       await getUserInfo(fid);
 
-      const unsub = onSnapshot(doc(db,"locations",fid),(locSnap)=>{
-        if(!locSnap.exists()){
-          friendLocs.delete(fid);
-          removeFriendMarker(fid);
-          if(routingToUid===fid) clearRoute();
-          return;
-        }
-        const l = locSnap.data();
-        friendLocs.set(fid,l);
+      const unsub = onSnapshot(
+        doc(db,"locations",fid),
+        (locSnap)=>{
+          if(!locSnap.exists()){
+            friendLocs.delete(fid);
+            removeFriendMarker(fid);
+            if(routingToUid===fid) clearRoute();
+            return;
+          }
 
-        if (!l.sharing) {
-          removeFriendMarker(fid);
-          if (routingToUid === fid) clearRoute();
-          return;
-        }
+          const l = locSnap.data();
+          friendLocs.set(fid,l);
 
-        if (typeof l.lat !== "number" || typeof l.lng !== "number") {
-          // ✅ bạn bè bật share nhưng chưa gửi tọa độ
-          removeFriendMarker(fid);
-          return;
-        }
-      },(err) => {
-        console.error("locations listener error:", err);
-        toast("Không đọc được vị trí bạn bè: " + (err?.message || err));
-      });
+          if(!l.sharing){
+            removeFriendMarker(fid);
+            if(routingToUid===fid) clearRoute();
+            return;
+          }
 
-      upsertFriendMarker(fid, l.lat, l.lng, true);
-      if (routingToUid === fid) drawRouteTo(fid);
+          if(typeof l.lat !== "number" || typeof l.lng !== "number"){
+            removeFriendMarker(fid);
+            return;
+          }
+
+          // ✅ FIX: update marker inside snapshot (không dùng biến l ngoài scope)
+          upsertFriendMarker(fid, l.lat, l.lng, true);
+
+          // ✅ realtime route update nhưng không fitBounds
+          if(routingToUid === fid){
+            drawRouteTo(fid, false);
+          }
+        },
+        (err)=>{
+          console.error("locations listener error:", err);
+          toast("Không đọc được vị trí bạn bè: " + (err?.message || err));
+        }
+      );
 
       unsubLocs.set(fid, unsub);
     }
@@ -875,87 +885,81 @@ async function drawRouteTo(fid, fit=false){
       clearRoute();
     }
 
-      function listenFriends() {
-    if (unsubFriends) unsubFriends();
+    function listenFriends() {
+      if (unsubFriends) unsubFriends();
+      const qy = query(collection(db, "friends"), where(`users.${me.uid}`, "==", true));
 
-    // ✅ Dùng users.<uid> để tương thích mọi doc friends (cả có/không có uids)
-    const qy = query(collection(db, "friends"), where(`users.${me.uid}`, "==", true));
+      unsubFriends = onSnapshot(
+        qy,
+        async (snap) => {
+          const friends = [];
+          snap.forEach(d => {
+            const data = d.data() || {};
+            const uids = Object.keys(data.users || {});
+            const fid = uids.find(x => x !== me.uid);
+            if (fid) friends.push(fid);
+          });
 
-    unsubFriends = onSnapshot(
-      qy,
-      async (snap) => {
-        const friends = [];
-        snap.forEach(d => {
-          const data = d.data() || {};
-          const uids = Object.keys(data.users || {});
-          const fid = uids.find(x => x !== me.uid);
-          if (fid) friends.push(fid);
-        });
+          const list = $("friendsList");
+          list.innerHTML = "";
+          $("friendsEmpty").style.display = friends.length ? "none" : "block";
 
-        const list = $("friendsList");
-        list.innerHTML = "";
-        $("friendsEmpty").style.display = friends.length ? "none" : "block";
+          const current = new Set(friends);
+          Array.from(unsubLocs.keys()).forEach(fid => {
+            if (!current.has(fid)) {
+              try { unsubLocs.get(fid)(); } catch {}
+              unsubLocs.delete(fid);
+              friendLocs.delete(fid);
+              removeFriendMarker(fid);
+              if (routingToUid === fid) clearRoute();
+            }
+          });
 
-        // remove listeners for friends no longer in list
-        const current = new Set(friends);
-        Array.from(unsubLocs.keys()).forEach(fid => {
-          if (!current.has(fid)) {
-            try { unsubLocs.get(fid)(); } catch {}
-            unsubLocs.delete(fid);
-            friendLocs.delete(fid);
-            removeFriendMarker(fid);
-            if (routingToUid === fid) clearRoute();
-          }
-        });
+          for (const fid of friends) {
+            const u = await getUserInfo(fid);
 
-        for (const fid of friends) {
-          const u = await getUserInfo(fid);
-
-          const div = document.createElement("div");
-          div.className = "list-item";
-          div.innerHTML = `
-            <div class="list-left" style="cursor:pointer;">
-              <img class="list-ava" src="${safeAva(u.photoURL)}" alt="">
-              <div class="list-info">
-                <b>${u.displayName || "Bạn bè"}</b>
-                <small>${u.email || ("UID: " + fid.slice(0,8) + "...")}</small>
+            const div = document.createElement("div");
+            div.className = "list-item";
+            div.innerHTML = `
+              <div class="list-left" style="cursor:pointer;">
+                <img class="list-ava" src="${safeAva(u.photoURL)}" alt="">
+                <div class="list-info">
+                  <b>${u.displayName || "Bạn bè"}</b>
+                  <small>${u.email || ("UID: " + fid.slice(0,8) + "...")}</small>
+                </div>
               </div>
-            </div>
-            <div style="display:flex; gap:8px; flex: 0 0 auto;">
-              <button class="btn secondary" style="padding:6px 10px; font-size:12px">💬</button>
-              <button class="btn secondary" style="padding:6px 10px; font-size:12px">🧭</button>
-              <button class="btn danger" style="padding:6px 10px; font-size:12px">Xóa</button>
-            </div>
-          `;
+              <div style="display:flex; gap:8px; flex: 0 0 auto;">
+                <button class="btn secondary" style="padding:6px 10px; font-size:12px">💬</button>
+                <button class="btn secondary" style="padding:6px 10px; font-size:12px">🧭</button>
+                <button class="btn danger" style="padding:6px 10px; font-size:12px">Xóa</button>
+              </div>
+            `;
 
-          div.querySelector(".list-left").onclick = () => openChat(fid);
+            div.querySelector(".list-left").onclick = () => openChat(fid);
 
-          const btnChat = div.querySelectorAll("button")[0];
-          const btnRoute = div.querySelectorAll("button")[1];
-          const btnDel  = div.querySelectorAll("button")[2];
+            const btnChat = div.querySelectorAll("button")[0];
+            const btnRoute = div.querySelectorAll("button")[1];
+            const btnDel  = div.querySelectorAll("button")[2];
 
-          btnChat.onclick = () => openChat(fid);
-          btnRoute.onclick = () => startRoutingTo(fid);
-          btnDel.onclick = async () => {
-            if(!confirm("Xóa bạn này?")) return;
-            await deleteDoc(doc(db, "friends", friendDocId(me.uid, fid)));
-            removeFriendMarker(fid);
-            toast("Đã xóa bạn");
-          };
+            btnChat.onclick = () => openChat(fid);
+            btnRoute.onclick = () => startRoutingTo(fid);
+            btnDel.onclick = async () => {
+              if(!confirm("Xóa bạn này?")) return;
+              await deleteDoc(doc(db, "friends", friendDocId(me.uid, fid)));
+              removeFriendMarker(fid);
+              toast("Đã xóa bạn");
+            };
 
-          list.appendChild(div);
-
-          // ✅ tự hiện vị trí bạn bè trên map khi họ bật share
-          attachFriendLocationListener(fid);
+            list.appendChild(div);
+            attachFriendLocationListener(fid);
+          }
+        },
+        (err) => {
+          console.error("listenFriends error:", err);
+          toast("Lỗi friends: " + (err?.message || err));
         }
-      },
-      (err) => {
-        console.error("listenFriends error:", err);
-        toast("Lỗi friends: " + (err?.message || err));
-      }
-    );
-  }
-
+      );
+    }
 
     // ===== Chat (RTDB) =====
     let currentChatId=null;
@@ -973,7 +977,7 @@ async function drawRouteTo(fid, fit=false){
       }catch{return "";}
     }
 
-  function appendMessage(m){
+    function appendMessage(m){
       const isMe = m.from === me.uid;
 
       const row = document.createElement("div");
@@ -984,7 +988,7 @@ async function drawRouteTo(fid, fit=false){
 
       const bubble = document.createElement("div");
       bubble.className = "bubble";
-      bubble.textContent = (m.text || "").trim();
+      bubble.textContent = (m.text || "");
 
       const time = document.createElement("div");
       time.className = "msg-time";
@@ -994,10 +998,8 @@ async function drawRouteTo(fid, fit=false){
       wrap.appendChild(time);
       row.appendChild(wrap);
       chatBody.appendChild(row);
-
       chatBody.scrollTop = chatBody.scrollHeight;
     }
-
 
     function openChat(uid){
       if(!me) return;
