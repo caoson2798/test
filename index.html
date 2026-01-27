@@ -22,6 +22,10 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- plugin rotate -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+
+
   <style>
     :root{
       --bg-color:#f8fafc;
@@ -508,7 +512,13 @@
     $("btnGoProfile").onclick=()=>setTab("profile");
 
     // ===== Map =====
-    const map = L.map("map",{ zoomControl:false }).setView([21.0278,105.8342], 13);
+    const map = L.map("map", {
+      zoomControl: false,
+      rotate: true,
+      touchRotate: true,
+      rotateControl: true, // hiện nút xoay (nếu plugin hỗ trợ)
+      bearing: 0
+    }).setView([21.0278,105.8342], 13);
     window.__leafletMap = map;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"© OpenStreetMap" }).addTo(map);
 
