@@ -10,7 +10,6 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
   <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
   <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120.png">
-
   <link rel="manifest" href="manifest.json">
 
   <title>Friends Map</title>
@@ -22,9 +21,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- plugin rotate -->
+  <!-- plugin rotate (nếu browser hỗ trợ) -->
   <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
-
 
   <style>
     :root{
@@ -182,6 +180,13 @@
     .list-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .list-info small{display:block;color:var(--text-muted);font-size:11px;margin-top:2px;}
 
+    /* ✅ checkbox chọn bạn */
+    .friend-check{
+      width:18px;height:18px;
+      accent-color: var(--primary);
+      flex:0 0 auto;
+    }
+
     .profile-header{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 0;}
     .profile-avatar{
       width:80px;height:80px;border-radius:50%;
@@ -269,7 +274,17 @@
     .chat-title{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .chat-sub{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-    /* ===== CHAT (FIX) ===== */
+    .chip{
+      font-size:11px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,0.08);
+      background:rgba(255,255,255,0.7);
+      color:#334155;
+      font-weight:700;
+      margin-left:8px;
+    }
+
     .chat-body{
       flex:1;
       padding:12px;
@@ -304,7 +319,6 @@
       border:1px solid rgba(0,0,0,0.04);
       background:#fff;
 
-      /* ✅ ngắn thì 1 dòng, dài thì tự xuống */
       white-space:normal;
       overflow-wrap:anywhere;
       word-break:normal;
@@ -315,6 +329,13 @@
     }
 
     .msg-time{font-size:10px;color:#64748b;margin-top:4px;text-align:right;}
+
+    .seen-line{
+      padding:0 12px 10px;
+      font-size:11px;
+      color:#64748b;
+      min-height:18px;
+    }
 
     .chat-foot{
       padding:10px;display:flex;gap:8px;
@@ -340,6 +361,32 @@
     @media (max-width:420px){
       .msg-wrap{max-width:86%;}
     }
+
+    /* Leaflet control nhìn gọn */
+    .leaflet-control-layers{
+      border-radius:14px!important;
+      overflow:hidden;
+      box-shadow:0 10px 26px rgba(0,0,0,0.12);
+    }
+    .leaflet-control-layers label{font-family:Inter, sans-serif;}
+
+    /* ✅ Group action bar (hiện khi tick chọn bạn) */
+    .group-actionbar{
+      position:absolute;
+      left:12px; right:12px;
+      bottom:calc(var(--safe-b) + 86px); /* nằm trên bottom-nav */
+      z-index:1500;
+      background:rgba(255,255,255,0.92);
+      border:1px solid rgba(0,0,0,0.08);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      border-radius:18px;
+      padding:10px 12px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.10);
+    }
+    .gab-left{font-size:13px;color:#0f172a;}
+    .gab-left b{font-size:16px;}
   </style>
 </head>
 
@@ -384,6 +431,31 @@
           <p class="login-sub" style="margin:8px 0 0;font-size:11px;">Họ phải đăng nhập app này ít nhất 1 lần rồi mới kết bạn được.</p>
         </div>
 
+        <!-- ✅ GROUP CHAT (cũ: nhập email) -->
+        <div class="glass-card">
+          <div class="card-head">👨‍👩‍👧‍👦 Tạo nhóm chat (nhập email)</div>
+          <input id="groupName" class="inp" placeholder="Tên nhóm (vd: Hội Linh Đàm)" style="margin-bottom:10px;" />
+          <input id="groupMembers" class="inp" placeholder="Email thành viên (cách nhau bằng dấu phẩy)" style="margin-bottom:10px;" />
+          <button id="btnCreateGroup" class="btn primary" style="width:100%">Tạo nhóm</button>
+          <p class="login-sub" style="margin:8px 0 0;font-size:11px;">
+            Gợi ý: nhập email bạn bè đã dùng app. Ví dụ: a@gmail.com, b@gmail.com
+          </p>
+        </div>
+
+        <!-- ✅ GROUP CHAT (mới: tick chọn bạn) -->
+        <div class="glass-card">
+          <div class="card-head">✅ Tạo nhóm chat (tick chọn bạn)</div>
+          <p class="login-sub" style="margin:0;font-size:12px;">
+            Tick bạn ở “Danh sách bạn bè” bên dưới → thanh “Tạo nhóm” sẽ hiện.
+          </p>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-head">💬 Nhóm của bạn</div>
+          <div id="groupList"></div>
+          <div id="groupEmpty" class="login-sub" style="text-align:center;">Chưa có nhóm nào.</div>
+        </div>
+
         <div class="glass-card">
           <div class="card-head">📩 Lời mời đang chờ</div>
           <div id="incomingList"></div>
@@ -391,7 +463,10 @@
         </div>
 
         <div class="glass-card">
-          <div class="card-head">👥 Danh sách bạn bè</div>
+          <div class="card-head">
+            👥 Danh sách bạn bè
+            <span style="font-size:11px;color:#64748b;font-weight:700;">(tick để tạo nhóm)</span>
+          </div>
           <div id="friendsList"></div>
           <div id="friendsEmpty" class="login-sub" style="text-align:center;">Chưa có ai hết.</div>
         </div>
@@ -415,9 +490,17 @@
         <button id="btnLogout" class="btn danger" style="width:100%;justify-content:center;">Đăng xuất</button>
 
         <div style="text-align:center;margin-top:30px;font-size:11px;color:var(--text-muted);">
-          Friends Map v3.1 - Light Mode
+          Friends Map v3.3 - Map modes + Seen + Tick Group
         </div>
       </div>
+    </div>
+
+    <!-- ✅ Action bar tạo nhóm (hiện khi tick chọn bạn) -->
+    <div id="groupActionBar" class="group-actionbar hidden">
+      <div class="gab-left"><b id="gabCount">0</b> đã chọn</div>
+      <button id="btnOpenGroupModal" class="btn primary" style="padding:10px 12px;border-radius:14px;">
+        👨‍👩‍👧‍👦 Tạo nhóm
+      </button>
     </div>
 
     <nav class="bottom-nav">
@@ -433,13 +516,17 @@
     </nav>
   </section>
 
+  <!-- ✅ Modal chat -->
   <div id="chatBackdrop" class="modal-backdrop">
     <div class="chat-modal">
       <div class="chat-head">
         <div class="chat-head-left">
           <img id="chatAva" class="chat-ava" src="" alt="">
           <div style="min-width:0">
-            <div id="chatTitle" class="chat-title">Chat</div>
+            <div style="display:flex; align-items:center;">
+              <div id="chatTitle" class="chat-title">Chat</div>
+              <span id="chatChip" class="chip hidden">GROUP</span>
+            </div>
             <div id="chatSub" class="chat-sub">...</div>
           </div>
         </div>
@@ -448,7 +535,10 @@
           <button id="btnChatClose" class="btn secondary" style="padding:8px 10px;font-size:12px;">✖</button>
         </div>
       </div>
+
       <div id="chatBody" class="chat-body"></div>
+      <div id="seenLine" class="seen-line"></div>
+
       <div class="chat-foot">
         <input id="chatInput" class="chat-input" placeholder="Nhắn tin..." />
         <button id="btnChatSend" class="btn primary" style="padding:10px 12px;">Gửi</button>
@@ -456,12 +546,47 @@
     </div>
   </div>
 
+  <!-- ✅ Modal tạo nhóm từ tick -->
+  <div id="groupBackdrop" class="modal-backdrop">
+    <div class="chat-modal" style="height:auto;max-height:78vh;">
+      <div class="chat-head">
+        <div class="chat-head-left">
+          <img class="chat-ava" src="https://www.gravatar.com/avatar/?d=identicon&s=96" alt="">
+          <div style="min-width:0">
+            <div class="chat-title">Tạo nhóm chat</div>
+            <div class="chat-sub">Chọn bạn ở danh sách rồi đặt tên nhóm</div>
+          </div>
+        </div>
+        <button id="btnCloseGroupModal" class="btn secondary" style="padding:8px 10px;font-size:12px;">✖</button>
+      </div>
+
+      <div class="chat-body" style="padding:12px;">
+        <input id="groupName2" class="inp" placeholder="Tên nhóm..." style="margin-bottom:10px;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button id="btnSelectAllFriends" class="btn secondary" style="padding:8px 10px;font-size:12px;">Chọn tất cả</button>
+          <button id="btnClearSelectFriends" class="btn secondary" style="padding:8px 10px;font-size:12px;">Bỏ chọn</button>
+        </div>
+        <div id="selectedPreview" class="login-sub" style="margin:0 0 10px;font-size:12px;"></div>
+        <button id="btnCreateGroupFromSelected" class="btn primary" style="width:100%">✅ Tạo nhóm</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import { getDatabase, ref, push, onChildAdded, off, query as rQuery, limitToLast, serverTimestamp as rtdbServerTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc,
+      collection, addDoc, query, where, onSnapshot, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+      getDatabase, ref, push, set, update,
+      onChildAdded, onChildChanged, off,
+      query as rQuery, limitToLast,
+      serverTimestamp as rtdbServerTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
+    // ===== Firebase Config =====
     const firebaseConfig = {
       apiKey: "AIzaSyD6KpR4WVafZuMt5Xz3gbxZ8pMEaBClJzE",
       authDomain: "app-map-35d16.firebaseapp.com",
@@ -478,6 +603,7 @@
     const rtdb = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
+    // ===== Utils =====
     const $ = (id) => document.getElementById(id);
     const toast = (msg) => {
       const t = $("toast");
@@ -487,6 +613,10 @@
       window.__toastTimer = setTimeout(()=>t.classList.remove("show"), 2500);
     };
 
+    function safeAva(url){ return url || "https://www.gravatar.com/avatar/?d=mp&s=96"; }
+    function friendDocId(a,b){ return (a<b)?`${a}_${b}`:`${b}_${a}`; }
+
+    // ===== Tabs =====
     const views = { map: $("viewMap"), friends: $("viewFriends"), profile: $("viewProfile") };
     const tabs = { map: $("tabMap"), friends: $("tabFriends"), profile: $("tabProfile") };
     const topTitle = $("topTitle");
@@ -513,14 +643,35 @@
 
     // ===== Map =====
     const map = L.map("map", {
-      zoomControl: false,
+      zoomControl:false,
       rotate: true,
       touchRotate: true,
-      rotateControl: true, // hiện nút xoay (nếu plugin hỗ trợ)
+      rotateControl: true,
       bearing: 0
     }).setView([21.0278,105.8342], 13);
     window.__leafletMap = map;
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"© OpenStreetMap" }).addTo(map);
+
+    const layerOSM = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: "© OpenStreetMap"
+    });
+    const layerSatellite = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { maxZoom: 19, attribution: "Tiles © Esri" }
+    );
+    const layerTopo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+      maxZoom: 17, attribution: "© OpenTopoMap"
+    });
+    const layerDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19, attribution: "© CARTO"
+    });
+
+    layerOSM.addTo(map);
+    L.control.layers({
+      "🗺️ Thường (OSM)": layerOSM,
+      "🛰️ Vệ tinh (Esri)": layerSatellite,
+      "⛰️ Địa hình (Topo)": layerTopo,
+      "🌙 Tối (Dark)": layerDark
+    }, null, { position:"topleft" }).addTo(map);
 
     let me = null;
     let myMarker = null;
@@ -530,9 +681,6 @@
 
     let routeLayer = null;
     let routingToUid = null;
-
-    function safeAva(url){ return url || "https://www.gravatar.com/avatar/?d=mp&s=96"; }
-    function friendDocId(a,b){ return (a<b)?`${a}_${b}`:`${b}_${a}`; }
 
     function makeAvatarIcon(photoURL, isMe, isSharing=true){
       const ring = isSharing ? (isMe ? "ring-me" : "ring-friend") : "ring-off";
@@ -604,7 +752,7 @@
           const uid = btn.getAttribute("data-uid");
           const action = btn.getAttribute("data-action");
           if(!uid) return;
-          if(action==="chat") openChat(uid);
+          if(action==="chat") openDM(uid);
           if(action==="route") startRoutingTo(uid);
         };
       });
@@ -633,8 +781,6 @@
     function updateMyPos(pos){
       lastPos = { lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now() };
       upsertMyMarker(lastPos.lat,lastPos.lng);
-
-      // ✅ realtime route nhưng KHÔNG auto zoom ra (không fitBounds)
       if(routingToUid) drawRouteTo(routingToUid, false);
     }
 
@@ -673,7 +819,7 @@
     async function startRoutingTo(fid){
       routingToUid = fid;
       setTab("map");
-      await drawRouteTo(fid, true); // ✅ chỉ fit 1 lần khi bắt đầu
+      await drawRouteTo(fid, true);
     }
 
     async function drawRouteTo(fid, fit=false){
@@ -693,7 +839,6 @@
         if(routeLayer) map.removeLayer(routeLayer);
         routeLayer = L.polyline(coords).addTo(map);
 
-        // ✅ KHÔNG auto zoom ra khi realtime update
         if(fit){
           map.fitBounds(routeLayer.getBounds(), { padding:[40,40] });
         }
@@ -758,7 +903,6 @@
       if(lastPos && me) upsertMyMarker(lastPos.lat,lastPos.lng);
     }
 
-    // ✅ gửi vị trí tối đa mỗi 5s (interval 2s nhưng có throttle 5s)
     setInterval(async ()=>{
       if(!me || !sharing || !lastPos) return;
       const now=Date.now();
@@ -827,11 +971,9 @@
             await setDoc(doc(db, "friends", fid), {
               a: me.uid,
               b: r.from,
-              uids: [me.uid, r.from],
               users: { [me.uid]: true, [r.from]: true },
               createdAt: serverTimestamp()
             }, { merge: true });
-
             await attachFriendLocationListener(r.from);
             toast("Đã chấp nhận!");
           };
@@ -874,10 +1016,8 @@
             return;
           }
 
-          // ✅ FIX: update marker inside snapshot (không dùng biến l ngoài scope)
           upsertFriendMarker(fid, l.lat, l.lng, true);
 
-          // ✅ realtime route update nhưng không fitBounds
           if(routingToUid === fid){
             drawRouteTo(fid, false);
           }
@@ -899,6 +1039,80 @@
       clearRoute();
     }
 
+    // ===== Tick chọn bạn -> tạo nhóm =====
+    const selectedFriends = new Set();
+    const groupActionBar = $("groupActionBar");
+    const gabCount = $("gabCount");
+    const groupBackdrop = $("groupBackdrop");
+    const selectedPreview = $("selectedPreview");
+
+    function updateGroupBarUI(){
+      const n = selectedFriends.size;
+      gabCount.textContent = n;
+      groupActionBar.classList.toggle("hidden", n === 0);
+      selectedPreview.textContent = n ? `Đang chọn: ${n} người` : "Chưa chọn ai.";
+    }
+
+    function bindFriendCheckbox(div){
+      const cb = div.querySelector(".friend-check");
+      if(!cb) return;
+      const uid = cb.getAttribute("data-uid");
+      cb.checked = selectedFriends.has(uid);
+
+      cb.onchange = ()=>{
+        if(cb.checked) selectedFriends.add(uid);
+        else selectedFriends.delete(uid);
+        updateGroupBarUI();
+      };
+    }
+
+    $("btnOpenGroupModal").onclick = ()=>{
+      groupBackdrop.classList.add("show");
+      updateGroupBarUI();
+    };
+    $("btnCloseGroupModal").onclick = ()=> groupBackdrop.classList.remove("show");
+    groupBackdrop.onclick = (e)=>{ if(e.target===groupBackdrop) groupBackdrop.classList.remove("show"); };
+
+    $("btnSelectAllFriends").onclick = ()=>{
+      document.querySelectorAll(".friend-check").forEach(cb=>{
+        cb.checked = true;
+        selectedFriends.add(cb.getAttribute("data-uid"));
+      });
+      updateGroupBarUI();
+    };
+    $("btnClearSelectFriends").onclick = ()=>{
+      document.querySelectorAll(".friend-check").forEach(cb=> cb.checked = false);
+      selectedFriends.clear();
+      updateGroupBarUI();
+    };
+
+    $("btnCreateGroupFromSelected").onclick = async ()=>{
+      try{
+        const name = $("groupName2").value.trim();
+        if(!name) return toast("Chưa nhập tên nhóm!");
+        if(selectedFriends.size < 1) return toast("Chưa chọn bạn nào!");
+
+        const members = { [me.uid]: true };
+        selectedFriends.forEach(uid => members[uid] = true);
+
+        await addDoc(collection(db, "groups"),{
+          name,
+          owner: me.uid,
+          members,
+          createdAt: serverTimestamp()
+        });
+
+        toast("✅ Đã tạo nhóm!");
+        $("groupName2").value="";
+        selectedFriends.clear();
+        updateGroupBarUI();
+        groupBackdrop.classList.remove("show");
+      }catch(e){
+        toast("Lỗi tạo nhóm: " + (e.message || e));
+      }
+    };
+
+    // ===== listenFriends (đã thêm checkbox) =====
     function listenFriends() {
       if (unsubFriends) unsubFriends();
       const qy = query(collection(db, "friends"), where(`users.${me.uid}`, "==", true));
@@ -926,6 +1140,9 @@
               friendLocs.delete(fid);
               removeFriendMarker(fid);
               if (routingToUid === fid) clearRoute();
+
+              selectedFriends.delete(fid);
+              updateGroupBarUI();
             }
           });
 
@@ -935,9 +1152,10 @@
             const div = document.createElement("div");
             div.className = "list-item";
             div.innerHTML = `
-              <div class="list-left" style="cursor:pointer;">
+              <div class="list-left">
+                <input class="friend-check" type="checkbox" data-uid="${fid}">
                 <img class="list-ava" src="${safeAva(u.photoURL)}" alt="">
-                <div class="list-info">
+                <div class="list-info" style="cursor:pointer;">
                   <b>${u.displayName || "Bạn bè"}</b>
                   <small>${u.email || ("UID: " + fid.slice(0,8) + "...")}</small>
                 </div>
@@ -949,18 +1167,21 @@
               </div>
             `;
 
-            div.querySelector(".list-left").onclick = () => openChat(fid);
+            bindFriendCheckbox(div);
 
             const btnChat = div.querySelectorAll("button")[0];
             const btnRoute = div.querySelectorAll("button")[1];
             const btnDel  = div.querySelectorAll("button")[2];
 
-            btnChat.onclick = () => openChat(fid);
+            div.querySelector(".list-info").onclick = () => openDM(fid);
+            btnChat.onclick = () => openDM(fid);
             btnRoute.onclick = () => startRoutingTo(fid);
             btnDel.onclick = async () => {
               if(!confirm("Xóa bạn này?")) return;
               await deleteDoc(doc(db, "friends", friendDocId(me.uid, fid)));
               removeFriendMarker(fid);
+              selectedFriends.delete(fid);
+              updateGroupBarUI();
               toast("Đã xóa bạn");
             };
 
@@ -975,20 +1196,105 @@
       );
     }
 
+    // ===== GROUPS (Firestore) =====
+    let unsubGroups = null;
+
+    async function createGroupByEmails(){
+      const name = $("groupName").value.trim();
+      const raw = $("groupMembers").value.trim();
+
+      if(!name) return toast("Chưa nhập tên nhóm!");
+      const emails = raw ? raw.split(",").map(s=>s.trim()).filter(Boolean) : [];
+
+      const members = { [me.uid]: true };
+
+      for(const em of emails){
+        const uid = await findUidByEmail(em);
+        if(uid) members[uid] = true;
+      }
+
+      if(Object.keys(members).length < 2){
+        return toast("Nhóm cần ít nhất 1 thành viên ngoài bạn.");
+      }
+
+      await addDoc(collection(db, "groups"),{
+        name,
+        owner: me.uid,
+        members,
+        createdAt: serverTimestamp()
+      });
+
+      $("groupName").value="";
+      $("groupMembers").value="";
+      toast("✅ Đã tạo nhóm!");
+    }
+
+    $("btnCreateGroup").onclick = async ()=>{
+      try{ await createGroupByEmails(); }
+      catch(e){ toast("Lỗi tạo nhóm: " + (e.message||e)); }
+    };
+
+    function listenGroups(){
+      if(unsubGroups) unsubGroups();
+      const qy = query(collection(db,"groups"), where(`members.${me.uid}`, "==", true));
+      unsubGroups = onSnapshot(qy, (snap)=>{
+        const list = $("groupList");
+        list.innerHTML="";
+        $("groupEmpty").style.display = snap.empty ? "block" : "none";
+
+        snap.forEach(d=>{
+          const g = d.data() || {};
+          const gid = d.id;
+
+          const div = document.createElement("div");
+          div.className = "list-item";
+          div.innerHTML = `
+            <div class="list-left" style="cursor:pointer;">
+              <img class="list-ava" src="https://www.gravatar.com/avatar/?d=identicon&s=96" alt="">
+              <div class="list-info">
+                <b>👨‍👩‍👧‍👦 ${g.name || "Nhóm chat"}</b>
+                <small>ID: ${gid.slice(0,8)}...</small>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex:0 0 auto;">
+              <button class="btn secondary" style="padding:6px 10px; font-size:12px">💬</button>
+            </div>
+          `;
+          div.querySelector(".list-left").onclick = ()=> openGroup(gid, g.name || "Nhóm chat");
+          div.querySelector("button").onclick = ()=> openGroup(gid, g.name || "Nhóm chat");
+          list.appendChild(div);
+        });
+      });
+    }
+
     // ===== Chat (RTDB) =====
-    let currentChatId=null;
-    let currentMsgsRef=null;
-    let currentMsgHandler=null;
+    let currentChatType = null;        // "dm" | "group"
+    let currentChatId = null;          // dmId hoặc groupId
+    let currentMsgsRef = null;
+
+    let currentAddedHandler = null;
+    let currentChangedHandler = null;
+
+    let currentPeerUid = null;         // chỉ dùng cho dm
+    let lastOutgoingKey = null;
 
     const chatBackdrop=$("chatBackdrop");
     const chatBody=$("chatBody");
     const chatInput=$("chatInput");
+    const seenLine = $("seenLine");
+    const chatChip = $("chatChip");
 
     function fmtTime(ts){
       try{
         const d=new Date(ts);
         return new Intl.DateTimeFormat("vi-VN",{hour:"2-digit",minute:"2-digit"}).format(d);
       }catch{return "";}
+    }
+
+    function chatPath(){
+      if(currentChatType==="dm") return `chats/${currentChatId}/messages`;
+      if(currentChatType==="group") return `groupChats/${currentChatId}/messages`;
+      return null;
     }
 
     function appendMessage(m){
@@ -1015,65 +1321,186 @@
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    function openChat(uid){
-      if(!me) return;
-      currentChatId = friendDocId(me.uid, uid);
+    function setSeenTextForMessage(msg, key){
+      if(key !== lastOutgoingKey) return;
 
-      const u = userCache.get(uid) || {};
-      $("chatAva").src = safeAva(u.photoURL);
-      $("chatTitle").textContent = u.displayName || "Bạn bè";
-      $("chatSub").textContent = u.email || ("UID: " + uid.slice(0,8) + "...");
-
-      chatBody.innerHTML="";
-      chatBackdrop.classList.add("show");
-      $("btnChatRoute").onclick=()=>startRoutingTo(uid);
-
-      if(currentMsgsRef && currentMsgHandler){
-        off(currentMsgsRef, "child_added", currentMsgHandler);
+      if(currentChatType==="dm"){
+        const ok = !!(msg?.readBy && currentPeerUid && msg.readBy[currentPeerUid]);
+        seenLine.textContent = ok ? "✅ Đã xem" : "";
+        return;
       }
 
-      currentMsgsRef = rQuery(ref(rtdb, `chats/${currentChatId}/messages`), limitToLast(120));
-      currentMsgHandler = (snap)=>{
-        const m=snap.val();
-        if(m) appendMessage(m);
-      };
-      onChildAdded(currentMsgsRef, currentMsgHandler);
+      if(currentChatType==="group"){
+        const rb = msg?.readBy ? Object.keys(msg.readBy) : [];
+        const others = rb.filter(uid => uid !== me.uid);
+        seenLine.textContent = others.length ? `👀 Đã xem bởi ${others.length} người` : "";
+        return;
+      }
+    }
 
-      setTimeout(()=>chatInput.focus(), 200);
+    async function markRead(snapKey){
+      try{
+        const p = chatPath();
+        if(!p) return;
+        await update(ref(rtdb, `${p}/${snapKey}`),{
+          [`readBy/${me.uid}`]: true,
+          [`readAt/${me.uid}`]: Date.now()
+        });
+      }catch(e){
+        console.error("markRead error:", e);
+        toast("Lỗi đã xem: " + (e?.message || e));
+      }
+    }
+
+    function attachChatListeners(){
+      const p = chatPath();
+      if(!p) return;
+
+      if(currentMsgsRef && currentAddedHandler) off(currentMsgsRef, "child_added", currentAddedHandler);
+      if(currentMsgsRef && currentChangedHandler) off(currentMsgsRef, "child_changed", currentChangedHandler);
+
+      currentMsgsRef = rQuery(ref(rtdb, p), limitToLast(120));
+
+      currentAddedHandler = async (snap)=>{
+        const m = snap.val();
+        if(!m) return;
+
+        appendMessage(m);
+
+        if(m.from === me.uid){
+          lastOutgoingKey = snap.key;
+          setSeenTextForMessage(m, snap.key);
+        }else{
+          await markRead(snap.key);
+        }
+      };
+
+      currentChangedHandler = (snap)=>{
+        const m = snap.val();
+        if(!m) return;
+
+        if(m.from === me.uid){
+          setSeenTextForMessage(m, snap.key);
+        }
+      };
+
+      onChildAdded(currentMsgsRef, currentAddedHandler);
+      onChildChanged(currentMsgsRef, currentChangedHandler);
+    }
+
+    function openChatUI({title, sub, ava, typeChip, showRouteBtn}){
+      $("chatAva").src = ava || safeAva("");
+      $("chatTitle").textContent = title || "Chat";
+      $("chatSub").textContent = sub || "";
+      chatBody.innerHTML = "";
+      chatInput.value = "";
+      seenLine.textContent = "";
+      chatBackdrop.classList.add("show");
+
+      if(typeChip){
+        chatChip.textContent = typeChip;
+        chatChip.classList.remove("hidden");
+      }else{
+        chatChip.classList.add("hidden");
+      }
+
+      $("btnChatRoute").style.display = showRouteBtn ? "inline-flex" : "none";
+    }
+
+    function openDM(uid){
+      if(!me) return;
+
+      currentChatType = "dm";
+      currentPeerUid = uid;
+      currentChatId = friendDocId(me.uid, uid);
+      lastOutgoingKey = null;
+
+      const u = userCache.get(uid) || {};
+      openChatUI({
+        title: u.displayName || "Bạn bè",
+        sub: u.email || ("UID: " + uid.slice(0,8) + "..."),
+        ava: safeAva(u.photoURL),
+        typeChip: null,
+        showRouteBtn: true
+      });
+
+      $("btnChatRoute").onclick = ()=> startRoutingTo(uid);
+
+      attachChatListeners();
+    }
+
+    function openGroup(groupId, groupName){
+      if(!me) return;
+
+      currentChatType = "group";
+      currentPeerUid = null;
+      currentChatId = groupId;
+      lastOutgoingKey = null;
+
+      openChatUI({
+        title: groupName || "Nhóm chat",
+        sub: "Chat nhóm",
+        ava: "https://www.gravatar.com/avatar/?d=identicon&s=96",
+        typeChip: "GROUP",
+        showRouteBtn: false
+      });
+
+      attachChatListeners();
     }
 
     function closeChat(){
       chatBackdrop.classList.remove("show");
-      if(currentMsgsRef && currentMsgHandler){
-        off(currentMsgsRef, "child_added", currentMsgHandler);
-      }
-      currentChatId=null;
-      currentMsgsRef=null;
-      currentMsgHandler=null;
+
+      if(currentMsgsRef && currentAddedHandler) off(currentMsgsRef, "child_added", currentAddedHandler);
+      if(currentMsgsRef && currentChangedHandler) off(currentMsgsRef, "child_changed", currentChangedHandler);
+
+      currentChatType = null;
+      currentChatId = null;
+      currentPeerUid = null;
+
+      currentMsgsRef = null;
+      currentAddedHandler = null;
+      currentChangedHandler = null;
+
+      lastOutgoingKey = null;
+      seenLine.textContent = "";
     }
 
-    $("btnChatClose").onclick=closeChat;
-    chatBackdrop.onclick=(e)=>{ if(e.target===chatBackdrop) closeChat(); };
+    $("btnChatClose").onclick = closeChat;
+    chatBackdrop.onclick = (e)=>{ if(e.target===chatBackdrop) closeChat(); };
 
     async function sendMessage(){
-      const text=chatInput.value.trim();
+      const text = chatInput.value.trim();
       if(!text) return;
-      if(!me || !currentChatId) return;
-      chatInput.value="";
+      if(!me || !currentChatType || !currentChatId) return;
+
+      chatInput.value = "";
+
+      const p = chatPath();
+      if(!p) return;
+
       try{
-        await push(ref(rtdb, `chats/${currentChatId}/messages`),{
-          from:me.uid,
+        const msgRef = push(ref(rtdb, p));
+        const payload = {
+          from: me.uid,
           text,
-          ts:Date.now(),
-          serverTs:rtdbServerTimestamp(),
-          name:me.displayName||"",
-          photoURL:me.photoURL||""
-        });
+          ts: Date.now(),
+          serverTs: rtdbServerTimestamp(),
+          name: me.displayName || "",
+          photoURL: me.photoURL || "",
+          readBy: { [me.uid]: true },
+          readAt: { [me.uid]: Date.now() }
+        };
+        await set(msgRef, payload);
+
+        lastOutgoingKey = msgRef.key;
+        seenLine.textContent = "";
       }catch(e){
-        toast("Lỗi gửi tin: " + e.message);
+        toast("Lỗi gửi tin: " + (e.message || e));
       }
     }
-    $("btnChatSend").onclick=sendMessage;
+
+    $("btnChatSend").onclick = sendMessage;
     chatInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter") sendMessage(); });
 
     // ===== Auth =====
@@ -1091,6 +1518,8 @@
         detachAllFriendLocListeners();
         closeChat();
         if(myMarker){ map.removeLayer(myMarker); myMarker=null; }
+        selectedFriends.clear();
+        updateGroupBarUI();
         return;
       }
 
@@ -1116,6 +1545,7 @@
 
       listenIncoming();
       listenFriends();
+      listenGroups();
 
       setTab("map");
       toast("Chào " + (me.displayName || "bạn"));
