@@ -2,13 +2,12 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  
+
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Friends Map">
-<link rel="apple-touch-icon" href="ava.png">
-
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Friends Map">
+  <link rel="apple-touch-icon" href="ava.png">
   <link rel="manifest" href="manifest.json">
 
   <title>Friends Map</title>
@@ -21,293 +20,256 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    :root {
-      --bg-color: #f8fafc;
-      --glass-bg: rgba(255, 255, 255, 0.85);
-      --glass-border: rgba(0, 0, 0, 0.08);
-      --primary: #2563eb;
-      --primary-glow: rgba(37, 99, 235, 0.3);
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --danger: #ef4444;
-      --success: #16a34a;
-      --radius: 16px;
+    :root{
+      --bg-color:#f8fafc;
+      --glass-bg:rgba(255,255,255,0.85);
+      --glass-border:rgba(0,0,0,0.08);
+      --primary:#2563eb;
+      --primary-glow:rgba(37,99,235,0.3);
+      --text-main:#0f172a;
+      --text-muted:#64748b;
+      --danger:#ef4444;
+      --success:#16a34a;
+      --radius:16px;
       --safe-b: env(safe-area-inset-bottom, 20px);
       --safe-t: env(safe-area-inset-top, 20px);
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      height: 100vh;
-      overflow: hidden;
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{
+      margin:0;
+      font-family:'Inter',sans-serif;
+      background:var(--bg-color);
+      color:var(--text-main);
+      height:100dvh;         /* ✅ iOS/Safari stable */
+      overflow:hidden;
     }
-    .hidden { display: none !important; }
+    .hidden{display:none!important;}
 
-    /* --- Buttons / Inputs --- */
-    .btn {
-      border: none; outline: none;
-      font-family: inherit;
-      font-weight: 600; font-size: 14px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    .btn{
+      border:none;outline:none;
+      font-family:inherit;
+      font-weight:600;font-size:14px;
+      padding:12px 16px;border-radius:12px;
+      cursor:pointer;transition:all .2s;
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
     }
-    .btn:active { transform: scale(0.96); }
-    .btn.primary { background: var(--primary); color: white; box-shadow: 0 4px 12px var(--primary-glow); }
-    .btn.secondary { background: rgba(0,0,0,0.05); color: var(--text-main); border: 1px solid var(--glass-border); }
-    .btn.danger { background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; }
-    .btn.success { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+    .btn:active{transform:scale(.96);}
+    .btn.primary{background:var(--primary);color:#fff;box-shadow:0 4px 12px var(--primary-glow);}
+    .btn.secondary{background:rgba(0,0,0,0.05);color:var(--text-main);border:1px solid var(--glass-border);}
+    .btn.danger{background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;}
+    .btn.success{background:#dcfce7;color:#16a34a;border:1px solid #86efac;}
 
-    .inp {
-      width: 100%;
-      background: rgba(255,255,255,0.8);
-      border: 1px solid #cbd5e1;
-      color: var(--text-main);
-      padding: 14px;
-      border-radius: 12px;
-      outline: none;
-      font-size: 14px;
-      transition: border-color 0.2s;
+    .inp{
+      width:100%;
+      background:rgba(255,255,255,0.8);
+      border:1px solid #cbd5e1;
+      color:var(--text-main);
+      padding:14px;border-radius:12px;
+      outline:none;font-size:16px; /* ✅ iOS tránh zoom */
+      transition:border-color .2s;
     }
-    .inp:focus { border-color: var(--primary); background: #fff; }
+    .inp:focus{border-color:var(--primary);background:#fff;}
 
-    /* --- LOGIN --- */
-    .login-screen {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      text-align: center;
-      background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+    .login-screen{
+      height:100%;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:20px;text-align:center;
+      background:linear-gradient(135deg,#e0f2fe 0%,#f0f9ff 100%);
     }
-    .login-card {
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid white;
-      padding: 32px 24px;
-      border-radius: 24px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+    .login-card{
+      background:rgba(255,255,255,0.6);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border:1px solid #fff;
+      padding:32px 24px;border-radius:24px;
+      width:100%;max-width:380px;
+      box-shadow:0 20px 40px rgba(0,0,0,0.05);
     }
-    .app-logo {
-      width: 64px; height: 64px;
-      background: linear-gradient(135deg, var(--primary), #60a5fa);
-      border-radius: 18px;
-      display: grid; place-items: center;
-      font-size: 28px; font-weight: 900;
-      color: white;
-      margin: 0 auto 16px;
-      box-shadow: 0 10px 25px var(--primary-glow);
+    .app-logo{
+      width:64px;height:64px;
+      background:linear-gradient(135deg,var(--primary),#60a5fa);
+      border-radius:18px;
+      display:grid;place-items:center;
+      font-size:28px;font-weight:900;color:#fff;
+      margin:0 auto 16px;
+      box-shadow:0 10px 25px var(--primary-glow);
     }
-    .login-title { font-size: 22px; font-weight: 800; margin: 0 0 8px; }
-    .login-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+    .login-title{font-size:22px;font-weight:800;margin:0 0 8px;}
+    .login-sub{font-size:14px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;}
 
-    /* --- MAIN APP --- */
-    .app-screen { display: flex; flex-direction: column; height: 100%; position: relative; }
+    .app-screen{display:flex;flex-direction:column;height:100%;position:relative;}
 
-    .topbar {
-      position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
-      padding: calc(var(--safe-t) + 10px) 16px 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%);
-      display: flex; align-items: center; justify-content: space-between;
-      pointer-events: none;
+    .topbar{
+      position:absolute;top:0;left:0;right:0;z-index:1000;
+      padding:calc(var(--safe-t) + 10px) 16px 12px;
+      background:linear-gradient(180deg,rgba(255,255,255,0.95) 0%,rgba(255,255,255,0) 100%);
+      display:flex;align-items:center;justify-content:space-between;
+      pointer-events:none;
     }
-    .topbar > * { pointer-events: auto; }
-    .page-title { font-weight: 800; font-size: 20px; color: var(--text-main); text-shadow: 0 0 10px white; }
-    .user-pill {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.8);
-      backdrop-filter: blur(10px);
-      padding: 4px 12px 4px 4px;
-      border-radius: 30px;
-      border: 1px solid white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      cursor: pointer;
+    .topbar>*{pointer-events:auto;}
+    .page-title{font-weight:800;font-size:20px;color:var(--text-main);text-shadow:0 0 10px #fff;}
+    .user-pill{
+      display:flex;align-items:center;gap:8px;
+      background:rgba(255,255,255,0.8);
+      backdrop-filter:blur(10px);
+      padding:4px 12px 4px 4px;border-radius:30px;
+      border:1px solid #fff;
+      box-shadow:0 2px 10px rgba(0,0,0,0.05);
+      cursor:pointer;
     }
-    .user-pill img { width: 24px; height: 24px; border-radius: 50%; }
+    .user-pill img{width:24px;height:24px;border-radius:50%;object-fit:cover;}
 
-    .content-area { flex: 1; position: relative; overflow: hidden; }
-    .view-container {
-      position: absolute; inset: 0;
-      overflow-y: auto;
-      padding: calc(70px + var(--safe-t)) 16px calc(90px + var(--safe-b));
-      background: #f1f5f9;
+    .content-area{flex:1;position:relative;overflow:hidden;}
+    .view-container{
+      position:absolute;inset:0;
+      overflow-y:auto;
+      padding:calc(70px + var(--safe-t)) 16px calc(140px + var(--safe-b)); /* ✅ chừa chỗ bottom bar nổi */
+      background:#f1f5f9;
     }
-    #viewMap.view-container { padding: 0; background: transparent; bottom: 0; overflow: hidden; }
-    #map { width: 100%; height: 100%; z-index: 1; }
+    #viewMap.view-container{padding:0;background:transparent;bottom:0;overflow:hidden;}
+    #map{width:100%;height:100%;z-index:1;}
 
-    .locate-btn {
-      position: absolute;
-      bottom: calc(80px + var(--safe-b));
-      right: 16px;
-      z-index: 999;
-      width: 48px; height: 48px;
-      background: white;
-      border-radius: 50%;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-      display: grid; place-items: center;
-      font-size: 20px; cursor: pointer;
-      border: 1px solid rgba(0,0,0,0.05);
+    .locate-btn{
+      position:absolute;
+      bottom:calc(96px + var(--safe-b));
+      right:16px;
+      z-index:999;
+      width:48px;height:48px;
+      background:#fff;border-radius:50%;
+      box-shadow:0 4px 15px rgba(0,0,0,0.15);
+      display:grid;place-items:center;
+      font-size:20px;cursor:pointer;
+      border:1px solid rgba(0,0,0,0.05);
     }
-    .locate-btn:active { transform: scale(0.9); }
+    .locate-btn:active{transform:scale(.9);}
 
-    /* Route buttons (extra) */
-    .route-btn {
-      position: absolute;
-      bottom: calc(80px + var(--safe-b));
-      left: 16px;
-      z-index: 999;
-      display: flex;
-      gap: 10px;
+    .route-btn{
+      position:absolute;
+      bottom:calc(96px + var(--safe-b));
+      left:16px;
+      z-index:999;
+      display:flex;gap:10px;
     }
 
-    .glass-card {
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid white;
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    .glass-card{
+      background:rgba(255,255,255,0.75);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      border:1px solid #fff;
+      border-radius:var(--radius);
+      padding:16px;margin-bottom:16px;
+      box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);
     }
-    .card-head { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .card-head{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
 
-    .list-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px;
-      background: rgba(255,255,255,0.6);
-      border: 1px solid white;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      gap: 10px;
+    .list-item{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px;background:rgba(255,255,255,0.6);
+      border:1px solid #fff;border-radius:12px;
+      margin-bottom:8px;gap:10px;
     }
-    .list-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .list-ava { width: 34px; height: 34px; border-radius: 50%; background: #e2e8f0; flex: 0 0 auto; object-fit: cover; }
-    .list-info { min-width: 0; }
-    .list-info b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .list-info small { display: block; color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+    .list-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .list-ava{width:34px;height:34px;border-radius:50%;background:#e2e8f0;flex:0 0 auto;object-fit:cover;}
+    .list-info{min-width:0;}
+    .list-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .list-info small{display:block;color:var(--text-muted);font-size:11px;margin-top:2px;}
 
-    .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 0; }
-    .profile-avatar {
-      width: 80px; height: 80px; border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-      margin-bottom: 12px;
-      object-fit: cover;
+    .profile-header{display:flex;flex-direction:column;align-items:center;text-align:center;padding:20px 0;}
+    .profile-avatar{
+      width:80px;height:80px;border-radius:50%;
+      border:3px solid #fff;
+      box-shadow:0 10px 20px rgba(0,0,0,0.1);
+      margin-bottom:12px;object-fit:cover;
     }
-    .profile-name { font-size: 18px; font-weight: 800; }
-    .profile-email { color: var(--text-muted); font-size: 13px; }
+    .profile-name{font-size:18px;font-weight:800;}
+    .profile-email{color:var(--text-muted);font-size:13px;}
 
-    .bottom-nav {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 10px 16px calc(10px + var(--safe-b));
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--glass-border);
-      display: flex; justify-content: space-around;
-      z-index: 1000;
-      box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
+    /* ✅ Bottom nav nổi lên tránh Home Indicator */
+    .bottom-nav{
+      position:absolute;
+      left:12px; right:12px;
+      bottom:calc(var(--safe-b) + 10px);
+      padding:10px 12px;
+      background:var(--glass-bg);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      border:1px solid var(--glass-border);
+      border-radius:18px;
+      display:flex;justify-content:space-around;
+      z-index:1000;
+      box-shadow:0 10px 30px rgba(0,0,0,0.08);
     }
-    .nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      color: #94a3b8;
-      font-size: 10px; font-weight: 600;
-      padding: 6px 16px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
+    .nav-item{
+      display:flex;flex-direction:column;align-items:center;gap:4px;
+      color:#94a3b8;
+      font-size:10px;font-weight:600;
+      padding:6px 16px;border-radius:12px;
+      cursor:pointer;transition:all .2s;
     }
-    .nav-icon { font-size: 20px; margin-bottom: 2px; filter: grayscale(100%); transition: 0.2s; }
-    .nav-item.active { color: var(--primary); background: #eff6ff; }
-    .nav-item.active .nav-icon { filter: grayscale(0%); }
+    .nav-icon{font-size:20px;margin-bottom:2px;filter:grayscale(100%);transition:.2s;}
+    .nav-item.active{color:var(--primary);background:#eff6ff;}
+    .nav-item.active .nav-icon{filter:grayscale(0%);}
 
-    .toast {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 30px;
-      font-size: 14px;
-      font-weight: 500;
-      opacity: 0; pointer-events: none;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      z-index: 9999;
-      white-space: nowrap;
+    .toast{
+      position:fixed;top:20px;left:50%;
+      transform:translateX(-50%) translateY(-20px);
+      background:rgba(0,0,0,0.8);
+      color:#fff;padding:12px 20px;border-radius:30px;
+      font-size:14px;font-weight:500;
+      opacity:0;pointer-events:none;
+      transition:all .3s cubic-bezier(0.175,0.885,0.32,1.275);
+      z-index:9999;white-space:nowrap;
     }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(calc(var(--safe-t) + 10px)); }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(calc(var(--safe-t) + 10px));}
 
-    /* ====== Avatar marker for Leaflet ====== */
-    .avatar-marker { background: transparent; border: none; }
-    .avatar-wrap {
-      width: 44px; height: 44px;
-      border-radius: 50%;
-      overflow: hidden;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.22);
-      position: relative;
+    .avatar-marker{background:transparent;border:none;}
+    .avatar-wrap{
+      width:44px;height:44px;border-radius:50%;
+      overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,0.22);
+      position:relative;
     }
-    .avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .ring-me { border: 3px solid #ef4444; }      /* red ring for me */
-    .ring-friend { border: 3px solid #2563eb; }  /* blue ring for friend */
-    .ring-off { border: 3px solid #94a3b8; opacity: .85; }
+    .avatar-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+    .ring-me{border:3px solid #ef4444;}
+    .ring-friend{border:3px solid #2563eb;}
+    .ring-off{border:3px solid #94a3b8;opacity:.85;}
 
-    /* ====== Chat modal ====== */
-    .modal-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(15, 23, 42, 0.35);
-      backdrop-filter: blur(6px);
-      display: none;
-      z-index: 20000;
+    .modal-backdrop{
+      position:fixed;inset:0;
+      background:rgba(15,23,42,0.35);
+      backdrop-filter:blur(6px);
+      display:none;z-index:20000;
     }
-    .modal-backdrop.show { display: block; }
-    .chat-modal {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: min(520px, calc(100vw - 24px));
-      height: min(78vh, 680px);
-      background: rgba(255,255,255,0.92);
-      border: 1px solid rgba(255,255,255,0.9);
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.25);
-      display: flex;
-      flex-direction: column;
+    .modal-backdrop.show{display:block;}
+    .chat-modal{
+      position:absolute;left:50%;top:50%;
+      transform:translate(-50%,-50%);
+      width:min(520px,calc(100vw - 24px));
+      height:min(78vh,680px);
+      background:rgba(255,255,255,0.92);
+      border:1px solid rgba(255,255,255,0.9);
+      border-radius:20px;overflow:hidden;
+      box-shadow:0 25px 60px rgba(0,0,0,0.25);
+      display:flex;flex-direction:column;
     }
-    .chat-head {
-      padding: 12px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-      background: rgba(255,255,255,0.9);
+    .chat-head{
+      padding:12px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      background:rgba(255,255,255,0.9);
     }
-    .chat-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .chat-ava { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #e2e8f0; }
-    .chat-title { font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .chat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-head-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .chat-ava{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#e2e8f0;}
+    .chat-title{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .chat-sub{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-    .chat-body {
-      flex: 1;
-      padding: 12px 12px;
-      overflow-y: auto;
-      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    .chat-body{
+      flex:1;padding:12px;overflow-y:auto;
+      background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%);
     }
-    .msg-row { display: flex; margin: 6px 0; }
-    .msg-row.me { justify-content: flex-end; }
-    .bubble {
+    .msg-row{display:flex;margin:6px 0;}
+    .msg-row.me{justify-content:flex-end;}
+    .bubble{
       max-width: 78%;
       padding: 10px 12px;
       border-radius: 16px;
@@ -316,52 +278,35 @@
       box-shadow: 0 6px 16px rgba(0,0,0,0.06);
       border: 1px solid rgba(0,0,0,0.04);
       background: white;
+
       white-space: pre-wrap;
-      word-break: break-word;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
-    .msg-row.me .bubble {
-      background: #dbeafe;
-      border-color: rgba(37,99,235,0.18);
+    .msg-row.me .bubble{background:#dbeafe;border-color:rgba(37,99,235,0.18);}
+    .msg-time{font-size:10px;color:#64748b;margin-top:4px;text-align:right;}
+    .chat-foot{
+      padding:10px;display:flex;gap:8px;
+      border-top:1px solid rgba(0,0,0,0.06);
+      background:rgba(255,255,255,0.92);
     }
-    .msg-time { font-size: 10px; color: #64748b; margin-top: 4px; text-align: right; }
-    .chat-foot {
-      padding: 10px;
-      display: flex;
-      gap: 8px;
-      border-top: 1px solid rgba(0,0,0,0.06);
-      background: rgba(255,255,255,0.92);
-    }
-    .chat-input {
-      flex: 1;
-      border: 1px solid #cbd5e1;
-      background: #fff;
-      border-radius: 14px;
-      padding: 10px 12px;
-      outline: none;
-      font-size: 14px;
+    .chat-input{
+      flex:1;border:1px solid #cbd5e1;background:#fff;
+      border-radius:14px;padding:10px 12px;outline:none;font-size:16px; /* ✅ */
     }
 
-    /* Popup content */
-    .pop {
-      display: flex;
-      gap: 10px;
-      align-items: center;
+    .pop{display:flex;gap:10px;align-items:center;}
+    .pop img{
+      width:38px;height:38px;border-radius:50%;
+      object-fit:cover;background:#e2e8f0;
+      border:2px solid rgba(37,99,235,0.25);
     }
-    .pop img {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #e2e8f0;
-      border: 2px solid rgba(37,99,235,0.25);
-    }
-    .pop b { display: block; }
-    .pop small { color: #64748b; display: block; margin-top: 2px; }
-    .pop-actions { display: flex; gap: 8px; margin-top: 10px; }
-    .pop-actions button { padding: 8px 10px; font-size: 12px; border-radius: 12px; }
+    .pop b{display:block;}
+    .pop small{color:#64748b;display:block;margin-top:2px;}
+    .pop-actions{display:flex;gap:8px;margin-top:10px;}
+    .pop-actions button{padding:8px 10px;font-size:12px;border-radius:12px;}
 
-    @media (max-width: 420px) {
-      .bubble { max-width: 86%; }
-    }
+    @media (max-width:420px){.bubble{max-width:86%;}}
   </style>
 </head>
 
@@ -373,12 +318,8 @@
       <div class="app-logo">🗺️</div>
       <h1 class="login-title">Friends Map</h1>
       <p class="login-sub">Xem vị trí bạn bè thời gian thực.<br>Kết nối ngay, không lạc lối.</p>
-
-      <button id="btnLogin" class="btn primary" style="width: 100%; height: 50px;">
-        Đăng nhập với Google
-      </button>
-
-      <div style="margin-top: 24px; font-size: 12px; color: var(--text-muted); border-top: 1px solid #e2e8f0; padding-top: 16px;">
+      <button id="btnLogin" class="btn primary" style="width:100%;height:50px;">Đăng nhập với Google</button>
+      <div style="margin-top:24px;font-size:12px;color:var(--text-muted);border-top:1px solid #e2e8f0;padding-top:16px;">
         *Lưu ý: Nếu dùng máy tính bàn, vị trí có thể không chuẩn. Dùng điện thoại sẽ chuẩn hơn.
       </div>
     </div>
@@ -396,32 +337,30 @@
     <div class="content-area">
       <div id="viewMap" class="view-container">
         <div id="map"></div>
-
         <div class="locate-btn" id="btnLocateMe" title="Tìm lại vị trí">🎯</div>
-
         <div class="route-btn">
-          <button id="btnClearRoute" class="btn secondary" style="padding:10px 12px; border-radius: 14px;">🧹 Xóa đường</button>
+          <button id="btnClearRoute" class="btn secondary" style="padding:10px 12px;border-radius:14px;">🧹 Xóa đường</button>
         </div>
       </div>
 
       <div id="viewFriends" class="view-container hidden">
         <div class="glass-card">
           <div class="card-head">➕ Thêm bạn mới</div>
-          <input id="friendEmail" class="inp" placeholder="Nhập email bạn bè..." style="margin-bottom: 12px;" />
+          <input id="friendEmail" class="inp" placeholder="Nhập email bạn bè..." style="margin-bottom:12px;" />
           <button id="btnSendRequest" class="btn primary" style="width:100%">Gửi lời mời kết bạn</button>
-          <p class="login-sub" style="margin: 8px 0 0; font-size: 11px;">Họ phải đăng nhập app này ít nhất 1 lần rồi mới kết bạn được.</p>
+          <p class="login-sub" style="margin:8px 0 0;font-size:11px;">Họ phải đăng nhập app này ít nhất 1 lần rồi mới kết bạn được.</p>
         </div>
 
         <div class="glass-card">
           <div class="card-head">📩 Lời mời đang chờ</div>
           <div id="incomingList"></div>
-          <div id="incomingEmpty" class="login-sub" style="text-align: center;">Không có lời mời nào.</div>
+          <div id="incomingEmpty" class="login-sub" style="text-align:center;">Không có lời mời nào.</div>
         </div>
 
         <div class="glass-card">
           <div class="card-head">👥 Danh sách bạn bè</div>
           <div id="friendsList"></div>
-          <div id="friendsEmpty" class="login-sub" style="text-align: center;">Chưa có ai hết.</div>
+          <div id="friendsEmpty" class="login-sub" style="text-align:center;">Chưa có ai hết.</div>
         </div>
       </div>
 
@@ -435,36 +374,32 @@
         <div class="glass-card">
           <div class="card-head">
             <span>📡 Chia sẻ vị trí</span>
-            <button id="btnToggleShare" class="btn success" style="padding: 6px 12px; font-size: 12px;">Bật</button>
+            <button id="btnToggleShare" class="btn success" style="padding:6px 12px;font-size:12px;">Bật</button>
           </div>
           <p id="shareDesc" class="login-sub">Khi bật, bạn bè sẽ thấy icon của bạn di chuyển trên bản đồ.</p>
         </div>
 
-        <button id="btnLogout" class="btn danger" style="width:100%; justify-content:center;">Đăng xuất</button>
+        <button id="btnLogout" class="btn danger" style="width:100%;justify-content:center;">Đăng xuất</button>
 
-        <div style="text-align: center; margin-top: 30px; font-size: 11px; color: var(--text-muted);">
-          Friends Map v3.0 - Light Mode
+        <div style="text-align:center;margin-top:30px;font-size:11px;color:var(--text-muted);">
+          Friends Map v3.1 - Light Mode
         </div>
       </div>
     </div>
 
     <nav class="bottom-nav">
       <div class="nav-item active" id="tabMap">
-        <div class="nav-icon">🗺️</div>
-        <span>Bản đồ</span>
+        <div class="nav-icon">🗺️</div><span>Bản đồ</span>
       </div>
       <div class="nav-item" id="tabFriends">
-        <div class="nav-icon">👥</div>
-        <span>Bạn bè</span>
+        <div class="nav-icon">👥</div><span>Bạn bè</span>
       </div>
       <div class="nav-item" id="tabProfile">
-        <div class="nav-icon">⚙️</div>
-        <span>Cài đặt</span>
+        <div class="nav-icon">⚙️</div><span>Cài đặt</span>
       </div>
     </nav>
   </section>
 
-  <!-- Chat Modal -->
   <div id="chatBackdrop" class="modal-backdrop">
     <div class="chat-modal">
       <div class="chat-head">
@@ -475,14 +410,12 @@
             <div id="chatSub" class="chat-sub">...</div>
           </div>
         </div>
-        <div style="display:flex; gap:8px;">
-          <button id="btnChatRoute" class="btn secondary" style="padding:8px 10px; font-size:12px;">🧭 Chỉ đường</button>
-          <button id="btnChatClose" class="btn secondary" style="padding:8px 10px; font-size:12px;">✖</button>
+        <div style="display:flex;gap:8px;">
+          <button id="btnChatRoute" class="btn secondary" style="padding:8px 10px;font-size:12px;">🧭 Chỉ đường</button>
+          <button id="btnChatClose" class="btn secondary" style="padding:8px 10px;font-size:12px;">✖</button>
         </div>
       </div>
-
       <div id="chatBody" class="chat-body"></div>
-
       <div class="chat-foot">
         <input id="chatInput" class="chat-input" placeholder="Nhắn tin..." />
         <button id="btnChatSend" class="btn primary" style="padding:10px 12px;">Gửi</button>
@@ -492,18 +425,10 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc,
-      collection, addDoc, query, where, onSnapshot, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-    import {
-      getDatabase, ref, push, onChildAdded, off, query as rQuery, limitToLast, serverTimestamp as rtdbServerTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getDatabase, ref, push, onChildAdded, off, query as rQuery, limitToLast, serverTimestamp as rtdbServerTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-    // ====== Firebase Config ======
     const firebaseConfig = {
       apiKey: "AIzaSyD6KpR4WVafZuMt5Xz3gbxZ8pMEaBClJzE",
       authDomain: "app-map-35d16.firebaseapp.com",
@@ -520,7 +445,6 @@
     const rtdb = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
-    // ====== UI Helpers ======
     const $ = (id) => document.getElementById(id);
     const toast = (msg) => {
       const t = $("toast");
@@ -530,81 +454,70 @@
       window.__toastTimer = setTimeout(()=>t.classList.remove("show"), 2500);
     };
 
-    // ====== Tabs ======
     const views = { map: $("viewMap"), friends: $("viewFriends"), profile: $("viewProfile") };
     const tabs = { map: $("tabMap"), friends: $("tabFriends"), profile: $("tabProfile") };
     const topTitle = $("topTitle");
 
-    function setTab(name) {
-      Object.values(views).forEach(el => el.classList.add("hidden"));
-      Object.values(tabs).forEach(el => el.classList.remove("active"));
+    function setTab(name){
+      Object.values(views).forEach(el=>el.classList.add("hidden"));
+      Object.values(tabs).forEach(el=>el.classList.remove("active"));
 
       views[name].classList.remove("hidden");
       tabs[name].classList.add("active");
 
-      if(name === 'map') topTitle.textContent = "Bản đồ";
-      if(name === 'friends') topTitle.textContent = "Bạn bè";
-      if(name === 'profile') topTitle.textContent = "Cá nhân";
+      if(name==="map") topTitle.textContent="Bản đồ";
+      if(name==="friends") topTitle.textContent="Bạn bè";
+      if(name==="profile") topTitle.textContent="Cá nhân";
 
-      if (name === "map" && window.__leafletMap) {
-        setTimeout(() => window.__leafletMap.invalidateSize(), 200);
+      if(name==="map" && window.__leafletMap){
+        setTimeout(()=>window.__leafletMap.invalidateSize(), 200);
       }
     }
-    tabs.map.onclick = () => setTab("map");
-    tabs.friends.onclick = () => setTab("friends");
-    tabs.profile.onclick = () => setTab("profile");
-    $("btnGoProfile").onclick = () => setTab("profile");
+    tabs.map.onclick=()=>setTab("map");
+    tabs.friends.onclick=()=>setTab("friends");
+    tabs.profile.onclick=()=>setTab("profile");
+    $("btnGoProfile").onclick=()=>setTab("profile");
 
-    // ====== Map ======
-    const map = L.map('map', { zoomControl: false }).setView([21.0278, 105.8342], 13);
+    // ===== Map =====
+    const map = L.map("map",{ zoomControl:false }).setView([21.0278,105.8342], 13);
     window.__leafletMap = map;
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"© OpenStreetMap" }).addTo(map);
 
     let me = null;
     let myMarker = null;
-    const friendMarkers = new Map();      // uid -> marker
-    const friendLocs = new Map();         // uid -> {lat,lng,sharing,updatedAt}
-    const userCache = new Map();          // uid -> {displayName,email,photoURL}
+    const friendMarkers = new Map();
+    const friendLocs = new Map();
+    const userCache = new Map();
 
     let routeLayer = null;
     let routingToUid = null;
 
-    function safeAva(url) {
-      return url || "https://www.gravatar.com/avatar/?d=mp&s=96";
-    }
+    function safeAva(url){ return url || "https://www.gravatar.com/avatar/?d=mp&s=96"; }
+    function friendDocId(a,b){ return (a<b)?`${a}_${b}`:`${b}_${a}`; }
 
-    function makeAvatarIcon(photoURL, isMe, isSharing=true) {
+    function makeAvatarIcon(photoURL, isMe, isSharing=true){
       const ring = isSharing ? (isMe ? "ring-me" : "ring-friend") : "ring-off";
-      const html = `
-        <div class="avatar-wrap ${ring}">
-          <img src="${safeAva(photoURL)}" alt="">
-        </div>
-      `;
       return L.divIcon({
-        className: "avatar-marker",
-        html,
-        iconSize: [44, 44],
-        iconAnchor: [22, 44],
-        popupAnchor: [0, -40]
+        className:"avatar-marker",
+        html:`<div class="avatar-wrap ${ring}"><img src="${safeAva(photoURL)}" alt=""></div>`,
+        iconSize:[44,44],
+        iconAnchor:[22,44],
+        popupAnchor:[0,-40]
       });
     }
 
-    function upsertMyMarker(lat, lng) {
-      const pos = [lat, lng];
+    function upsertMyMarker(lat,lng){
+      const pos=[lat,lng];
       const icon = makeAvatarIcon(me?.photoURL, true, true);
-      if (!myMarker) {
-        myMarker = L.marker(pos, { icon }).addTo(map).bindPopup("<b>📍 Bạn đang ở đây</b>");
-      } else {
+      if(!myMarker){
+        myMarker = L.marker(pos,{icon}).addTo(map).bindPopup("<b>📍 Bạn đang ở đây</b>");
+      }else{
         myMarker.setLatLng(pos);
         myMarker.setIcon(icon);
       }
     }
 
-    function friendPopupHtml(fid) {
+    function friendPopupHtml(fid){
       const u = userCache.get(fid) || {};
       return `
         <div>
@@ -623,327 +536,332 @@
       `;
     }
 
-    function upsertFriendMarker(uid, lat, lng, isSharing) {
-      const pos = [lat, lng];
+    function upsertFriendMarker(uid,lat,lng,isSharing){
+      const pos=[lat,lng];
       const u = userCache.get(uid) || {};
       const icon = makeAvatarIcon(u.photoURL, false, !!isSharing);
 
       const existing = friendMarkers.get(uid);
-      if (!existing) {
-        const m = L.marker(pos, { icon }).addTo(map).bindPopup(friendPopupHtml(uid));
-        friendMarkers.set(uid, m);
-      } else {
+      if(!existing){
+        const m = L.marker(pos,{icon}).addTo(map).bindPopup(friendPopupHtml(uid));
+        friendMarkers.set(uid,m);
+      }else{
         existing.setLatLng(pos);
         existing.setIcon(icon);
         existing.setPopupContent(friendPopupHtml(uid));
       }
     }
 
-    function removeFriendMarker(uid) {
+    function removeFriendMarker(uid){
       const m = friendMarkers.get(uid);
-      if (m) { map.removeLayer(m); friendMarkers.delete(uid); }
+      if(m){ map.removeLayer(m); friendMarkers.delete(uid); }
     }
 
-    // handle popup button clicks
-    map.on("popupopen", (e) => {
+    map.on("popupopen", (e)=>{
       const root = e.popup.getElement();
-      if (!root) return;
-      root.querySelectorAll("button[data-action]").forEach(btn => {
-        btn.onclick = () => {
+      if(!root) return;
+      root.querySelectorAll("button[data-action]").forEach(btn=>{
+        btn.onclick=()=>{
           const uid = btn.getAttribute("data-uid");
           const action = btn.getAttribute("data-action");
-          if (!uid) return;
-          if (action === "chat") openChat(uid);
-          if (action === "route") startRoutingTo(uid);
+          if(!uid) return;
+          if(action==="chat") openChat(uid);
+          if(action==="route") startRoutingTo(uid);
         };
       });
     });
 
-    // ====== Geolocation ======
-    let watchId = null;
-    let lastPos = null;
+    // ===== Geo =====
+    let watchId=null;
+    let lastPos=null;
 
-    function requestLocation(manual = false) {
-      if (!navigator.geolocation) return toast("Máy không có GPS");
-      if (manual) toast("Đang dò vị trí...");
-
-      const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+    function requestLocation(manual=false){
+      if(!navigator.geolocation) return toast("Máy không có GPS");
+      if(manual) toast("Đang dò vị trí...");
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        (pos)=>{
           updateMyPos(pos);
-          if (manual) {
-            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+          if(manual){
+            map.setView([pos.coords.latitude,pos.coords.longitude],16);
             toast("Đã cập nhật vị trí!");
           }
         },
-        (err) => {
-          console.error(err);
-          if (manual) toast("Không dò được: " + err.message);
-        },
-        options
+        (err)=>{ if(manual) toast("Không dò được: " + err.message); },
+        { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
       );
     }
 
-    function updateMyPos(pos) {
-      lastPos = { lat: pos.coords.latitude, lng: pos.coords.longitude, ts: Date.now() };
-      upsertMyMarker(lastPos.lat, lastPos.lng);
-
-      // if routing active, redraw route
-      if (routingToUid) drawRouteTo(routingToUid);
+    function updateMyPos(pos){
+      lastPos = { lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now() };
+      upsertMyMarker(lastPos.lat,lastPos.lng);
+      if(routingToUid) drawRouteTo(routingToUid);
     }
 
-    function startGeolocationWatch() {
-      if (!navigator.geolocation) return;
+    function startGeolocationWatch(){
+      if(!navigator.geolocation) return;
       requestLocation(false);
 
-      if (watchId != null) navigator.geolocation.clearWatch(watchId);
+      if(watchId!=null) navigator.geolocation.clearWatch(watchId);
       watchId = navigator.geolocation.watchPosition(
-        (pos) => {
+        (pos)=>{
           updateMyPos(pos);
-          if (!window.__centered) {
-            map.setView([pos.coords.latitude, pos.coords.longitude], 15);
-            window.__centered = true;
+          if(!window.__centered){
+            map.setView([pos.coords.latitude,pos.coords.longitude],15);
+            window.__centered=true;
           }
         },
-        (err) => console.log("Watch error:", err),
-        { enableHighAccuracy: true, maximumAge: 10000 }
+        ()=>{},
+        { enableHighAccuracy:true, maximumAge:10000 }
       );
     }
 
-    function stopGeolocationWatch() {
-      if (watchId != null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-      }
+    function stopGeolocationWatch(){
+      if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
     }
 
-    $("btnLocateMe").onclick = () => requestLocation(true);
+    $("btnLocateMe").onclick=()=>requestLocation(true);
 
-    // ====== Routing (OSRM) ======
-    function clearRoute() {
-      routingToUid = null;
-      if (routeLayer) {
-        map.removeLayer(routeLayer);
-        routeLayer = null;
-      }
+    // ===== Routing (OSRM) =====
+    function clearRoute(){
+      routingToUid=null;
+      if(routeLayer){ map.removeLayer(routeLayer); routeLayer=null; }
       toast("Đã xóa đường đi");
     }
-    $("btnClearRoute").onclick = () => clearRoute();
+    $("btnClearRoute").onclick=()=>clearRoute();
 
-    async function startRoutingTo(fid) {
-      routingToUid = fid;
+    async function startRoutingTo(fid){
+      routingToUid=fid;
       setTab("map");
       await drawRouteTo(fid);
     }
 
-    async function drawRouteTo(fid) {
-      try {
-        if (!lastPos) return toast("Chưa có vị trí của bạn");
+    async function drawRouteTo(fid){
+      try{
+        if(!lastPos) return toast("Chưa có vị trí của bạn");
         const f = friendLocs.get(fid);
-        if (!f || !f.sharing || typeof f.lat !== "number") return toast("Bạn bè đang ẩn vị trí");
+       if (!f) return toast("Chưa có dữ liệu vị trí bạn bè");
+        if (!f.sharing) return toast("Bạn bè đang ẩn vị trí");
+        if (typeof f.lat !== "number" || typeof f.lng !== "number") return toast("Bạn bè chưa gửi vị trí (chưa có GPS)");
 
         const url = `https://router.project-osrm.org/route/v1/driving/${lastPos.lng},${lastPos.lat};${f.lng},${f.lat}?overview=full&geometries=geojson`;
         const res = await fetch(url);
         const data = await res.json();
-        if (!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
+        if(!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
 
-        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        if (routeLayer) map.removeLayer(routeLayer);
+        const coords = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+        if(routeLayer) map.removeLayer(routeLayer);
         routeLayer = L.polyline(coords).addTo(map);
+        map.fitBounds(routeLayer.getBounds(), { padding:[40,40] });
 
-        // zoom fit
-        const bounds = routeLayer.getBounds();
-        map.fitBounds(bounds, { padding: [40, 40] });
-
-        const meters = data.routes[0].distance || 0;
-        const seconds = data.routes[0].duration || 0;
-        const km = (meters / 1000).toFixed(1);
-        const mins = Math.round(seconds / 60);
+        const km = ((data.routes[0].distance||0)/1000).toFixed(1);
+        const mins = Math.round((data.routes[0].duration||0)/60);
         toast(`🧭 ${km} km • ~${mins} phút`);
-      } catch (e) {
-        console.error(e);
-        toast("Lỗi chỉ đường: " + (e.message || "unknown"));
+      }catch(e){
+        toast("Lỗi chỉ đường: " + (e.message||"unknown"));
       }
     }
 
-    // ====== Firebase Helpers (Firestore) ======
-    function friendDocId(a, b) { return (a < b) ? `${a}_${b}` : `${b}_${a}`; }
-
-    async function ensureUserDoc(user) {
-      await setDoc(doc(db, "users", user.uid), {
-        displayName: user.displayName || "No name",
-        email: user.email || "",
-        photoURL: user.photoURL || "",
-        lastSeen: serverTimestamp()
-      }, { merge: true });
+    // ===== Firestore Helpers =====
+    async function ensureUserDoc(user){
+      await setDoc(doc(db,"users",user.uid),{
+        displayName:user.displayName||"No name",
+        email:user.email||"",
+        photoURL:user.photoURL||"",
+        lastSeen:serverTimestamp()
+      },{merge:true});
     }
-    async function ensurePublicEmailIndex(user) {
-      if (!user.email) return;
-      const key = user.email.trim().toLowerCase().replaceAll(".", "(dot)");
-      await setDoc(doc(db, "publicEmail", key), { uid: user.uid }, { merge: true });
+    async function ensurePublicEmailIndex(user){
+      if(!user.email) return;
+      const key = user.email.trim().toLowerCase().replaceAll(".","(dot)");
+      await setDoc(doc(db,"publicEmail",key),{uid:user.uid},{merge:true});
     }
-    async function findUidByEmail(email) {
-      const key = email.trim().toLowerCase().replaceAll(".", "(dot)");
-      const snap = await getDoc(doc(db, "publicEmail", key));
-      return snap.exists() ? snap.data().uid : null;
+    async function findUidByEmail(email){
+      const key = email.trim().toLowerCase().replaceAll(".","(dot)");
+      const snap = await getDoc(doc(db,"publicEmail",key));
+      return snap.exists()?snap.data().uid:null;
     }
-
-    async function getUserInfo(uid) {
-      if (userCache.has(uid)) return userCache.get(uid);
-      const s = await getDoc(doc(db, "users", uid));
-      const data = s.exists() ? s.data() : { displayName: "Bạn bè", email: "", photoURL: "" };
-      userCache.set(uid, data);
+    async function getUserInfo(uid){
+      if(userCache.has(uid)) return userCache.get(uid);
+      const s = await getDoc(doc(db,"users",uid));
+      const data = s.exists()?s.data():{displayName:"Bạn bè",email:"",photoURL:""};
+      userCache.set(uid,data);
       return data;
     }
 
-    // ====== Sharing (Firestore locations) ======
-    let sharing = false;
-    let lastSentAt = 0;
+    // ===== Sharing =====
+    let sharing=false;
+    let lastSentAt=0;
 
-    async function setSharingUI(on) {
-      sharing = on;
-      const btn = $("btnToggleShare");
-      const label = $("shareDesc");
+    async function setSharingUI(on){
+      sharing=on;
+      const btn=$("btnToggleShare");
+      const label=$("shareDesc");
 
-      if (sharing) {
-        btn.textContent = "Tắt";
-        btn.className = "btn danger";
-        label.textContent = "🟢 Đang chia sẻ.";
-      } else {
-        btn.textContent = "Bật";
-        btn.className = "btn success";
-        label.textContent = "⚪ Đang ẩn.";
+      if(sharing){
+        btn.textContent="Tắt"; btn.className="btn danger";
+        label.textContent="🟢 Đang chia sẻ.";
+      }else{
+        btn.textContent="Bật"; btn.className="btn success";
+        label.textContent="⚪ Đang ẩn.";
       }
-      if (me) await setDoc(doc(db, "locations", me.uid), { sharing, updatedAt: serverTimestamp() }, { merge: true });
 
-      // also update my marker ring quickly
-      if (lastPos && me) upsertMyMarker(lastPos.lat, lastPos.lng);
+      if (me) {
+        const payload = { sharing, updatedAt: serverTimestamp() };
+
+        // ✅ nếu đang bật share và đã có vị trí thì đẩy lat/lng lên NGAY
+        if (sharing && lastPos) {
+          payload.lat = lastPos.lat;
+          payload.lng = lastPos.lng;
+        }
+
+        await setDoc(doc(db, "locations", me.uid), payload, { merge: true });
+      }
+      if(lastPos && me) upsertMyMarker(lastPos.lat,lastPos.lng);
     }
 
-    setInterval(async () => {
-      if (!me || !sharing || !lastPos) return;
-      const now = Date.now();
-      if (now - lastSentAt < 5000) return;
+    setInterval(async ()=>{
+      if(!me || !sharing || !lastPos) return;
+      const now=Date.now();
+      if(now-lastSentAt<5000) return;
+      try{
+        await setDoc(doc(db,"locations",me.uid),{
+          sharing:true, lat:lastPos.lat, lng:lastPos.lng, updatedAt:serverTimestamp()
+        },{merge:true});
+        lastSentAt=now;
+      }catch{}
+    },2000);
 
-      try {
-        await setDoc(doc(db, "locations", me.uid), {
-          sharing: true,
-          lat: lastPos.lat,
-          lng: lastPos.lng,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-        lastSentAt = now;
-      } catch(e) {}
-    }, 2000);
-
-    // ====== Friends: Requests + List + Realtime locations ======
-    $("btnSendRequest").onclick = async () => {
-      const email = $("friendEmail").value.trim();
-      if (!email) return toast("Chưa nhập email!");
-      try {
+    // ===== Friends + Locations =====
+    $("btnSendRequest").onclick = async ()=>{
+      const email=$("friendEmail").value.trim();
+      if(!email) return toast("Chưa nhập email!");
+      try{
         const uid = await findUidByEmail(email);
-        if (!uid) return toast("Người này chưa dùng app.");
-        if (uid === me.uid) return toast("Không thể tự kết bạn.");
-
-        await addDoc(collection(db, "friendRequests"), {
-          from: me.uid, to: uid, status: "pending", createdAt: serverTimestamp()
+        if(!uid) return toast("Người này chưa dùng app.");
+        if(uid===me.uid) return toast("Không thể tự kết bạn.");
+        await addDoc(collection(db,"friendRequests"),{
+          from:me.uid, to:uid, status:"pending", createdAt:serverTimestamp()
         });
         toast("Đã gửi lời mời!");
-        $("friendEmail").value = "";
-      } catch(e) { toast("Lỗi: " + e.message); }
+        $("friendEmail").value="";
+      }catch(e){ toast("Lỗi: " + e.message); }
     };
 
-    let unsubIncoming = null;
-    let unsubFriends = null;
-    let unsubLocs = new Map(); // fid -> unsub
+    let unsubIncoming=null;
+    let unsubFriends=null;
+    const unsubLocs=new Map();
 
-    function listenIncoming() {
-      if (unsubIncoming) unsubIncoming();
-      const qy = query(collection(db, "friendRequests"),
-        where("to", "==", me.uid),
-        where("status", "==", "pending")
+    function listenIncoming(){
+      if(unsubIncoming) unsubIncoming();
+      const qy = query(collection(db,"friendRequests"),
+        where("to","==",me.uid),
+        where("status","==","pending")
       );
 
-      unsubIncoming = onSnapshot(qy, (snap) => {
-        const list = $("incomingList");
-        list.innerHTML = "";
-        $("incomingEmpty").style.display = snap.empty ? "block" : "none";
+      unsubIncoming = onSnapshot(qy,(snap)=>{
+        const list=$("incomingList");
+        list.innerHTML="";
+        $("incomingEmpty").style.display = snap.empty ? "block":"none";
 
-        snap.forEach(d => {
-          const r = d.data();
-          const div = document.createElement("div");
-          div.className = "list-item";
-          div.innerHTML = `
+        snap.forEach(d=>{
+          const r=d.data();
+          const div=document.createElement("div");
+          div.className="list-item";
+          div.innerHTML=`
             <div class="list-left">
               <img class="list-ava" src="https://www.gravatar.com/avatar/?d=mp&s=96">
               <div class="list-info">
                 <b>Lời mời kết bạn</b>
-                <small>Từ UID: ${r.from?.substr(0, 6)}...</small>
+                <small>Từ UID: ${r.from?.substr(0,6)}...</small>
               </div>
             </div>
-            <div style="display:flex; gap:8px">
+            <div style="display:flex;gap:8px">
               <button class="btn success" style="padding:6px 10px">✔</button>
               <button class="btn danger" style="padding:6px 10px">✘</button>
             </div>
           `;
-          div.querySelector(".btn.success").onclick = async () => {
-            await updateDoc(doc(db, "friendRequests", d.id), { status: "accepted" });
+
+          div.querySelector(".btn.success").onclick = async ()=>{
+            await updateDoc(doc(db,"friendRequests",d.id),{status:"accepted"});
             const fid = friendDocId(me.uid, r.from);
-            await setDoc(doc(db, "friends", fid), { users: { [me.uid]: true, [r.from]: true } }, { merge: true });
+            await setDoc(doc(db, "friends", fid), {
+              a: me.uid,                // ✅ thêm dòng này
+              b: r.from,                // ✅ thêm dòng này
+              uids: [me.uid, r.from],   // giữ nguyên
+              users: { [me.uid]: true, [r.from]: true },
+              createdAt: serverTimestamp()
+            }, { merge: true });
+
+            await attachFriendLocationListener(r.from);
             toast("Đã chấp nhận!");
           };
-          div.querySelector(".btn.danger").onclick = async () => {
-            await updateDoc(doc(db, "friendRequests", d.id), { status: "rejected" });
+
+          div.querySelector(".btn.danger").onclick = async ()=>{
+            await updateDoc(doc(db,"friendRequests",d.id),{status:"rejected"});
             toast("Đã từ chối.");
           };
+
           list.appendChild(div);
         });
       });
     }
 
-    async function attachFriendLocationListener(fid) {
-      if (unsubLocs.has(fid)) return;
-
-      // preload user info for avatar/name
+    async function attachFriendLocationListener(fid){
+      if(unsubLocs.has(fid)) return;
       await getUserInfo(fid);
 
-      const unsub = onSnapshot(doc(db, "locations", fid), (locSnap) => {
-        if (!locSnap.exists()) {
+      const unsub = onSnapshot(doc(db,"locations",fid),(locSnap)=>{
+        if(!locSnap.exists()){
           friendLocs.delete(fid);
           removeFriendMarker(fid);
-          if (routingToUid === fid) clearRoute();
+          if(routingToUid===fid) clearRoute();
           return;
         }
         const l = locSnap.data();
-        friendLocs.set(fid, l);
+        friendLocs.set(fid,l);
 
         if (!l.sharing) {
           removeFriendMarker(fid);
           if (routingToUid === fid) clearRoute();
-        } else {
-          upsertFriendMarker(fid, l.lat, l.lng, true);
-          if (routingToUid === fid) drawRouteTo(fid);
+          return;
         }
+
+        if (typeof l.lat !== "number" || typeof l.lng !== "number") {
+          // ✅ bạn bè bật share nhưng chưa gửi tọa độ
+          removeFriendMarker(fid);
+          return;
+        }
+      },(err) => {
+        console.error("locations listener error:", err);
+        toast("Không đọc được vị trí bạn bè: " + (err?.message || err));
       });
+
+      upsertFriendMarker(fid, l.lat, l.lng, true);
+      if (routingToUid === fid) drawRouteTo(fid);
 
       unsubLocs.set(fid, unsub);
     }
 
-    function detachAllFriendLocListeners() {
-      unsubLocs.forEach((unsub) => { try { unsub(); } catch {} });
+    function detachAllFriendLocListeners(){
+      unsubLocs.forEach((unsub)=>{ try{unsub();}catch{} });
       unsubLocs.clear();
       friendLocs.clear();
-      friendMarkers.forEach((m, uid) => removeFriendMarker(uid));
+      friendMarkers.forEach((m,uid)=>removeFriendMarker(uid));
       clearRoute();
     }
 
-    function listenFriends() {
-      if (unsubFriends) unsubFriends();
-      const qy = query(collection(db, "friends"), where(`users.${me.uid}`, "==", true));
-      unsubFriends = onSnapshot(qy, async (snap) => {
+      function listenFriends() {
+    if (unsubFriends) unsubFriends();
+
+    // ✅ Dùng users.<uid> để tương thích mọi doc friends (cả có/không có uids)
+    const qy = query(collection(db, "friends"), where(`users.${me.uid}`, "==", true));
+
+    unsubFriends = onSnapshot(
+      qy,
+      async (snap) => {
         const friends = [];
         snap.forEach(d => {
-          const data = d.data();
+          const data = d.data() || {};
           const uids = Object.keys(data.users || {});
           const fid = uids.find(x => x !== me.uid);
           if (fid) friends.push(fid);
@@ -985,7 +903,6 @@
             </div>
           `;
 
-          // click left opens chat
           div.querySelector(".list-left").onclick = () => openChat(fid);
 
           const btnChat = div.querySelectorAll("button")[0];
@@ -1003,172 +920,160 @@
 
           list.appendChild(div);
 
-          // make sure we listen to their location
+          // ✅ tự hiện vị trí bạn bè trên map khi họ bật share
           attachFriendLocationListener(fid);
         }
-      });
-    }
-
-    // ====== Chat (Realtime Database) ======
-    let currentChatUid = null;
-    let currentChatId = null;
-    let currentMsgsRef = null;
-    let currentMsgHandler = null;
-
-    const chatBackdrop = $("chatBackdrop");
-    const chatBody = $("chatBody");
-    const chatInput = $("chatInput");
-
-    function openChat(uid) {
-      if (!me) return;
-      currentChatUid = uid;
-      currentChatId = friendDocId(me.uid, uid);
-
-      // UI fill
-      const u = userCache.get(uid) || {};
-      $("chatAva").src = safeAva(u.photoURL);
-      $("chatTitle").textContent = u.displayName || "Bạn bè";
-      $("chatSub").textContent = u.email || ("UID: " + uid.slice(0,8) + "...");
-
-      chatBody.innerHTML = "";
-      chatBackdrop.classList.add("show");
-
-      // route button from chat
-      $("btnChatRoute").onclick = () => startRoutingTo(uid);
-
-      // stop old listener
-      if (currentMsgsRef && currentMsgHandler) {
-        off(currentMsgsRef, "child_added", currentMsgHandler);
+      },
+      (err) => {
+        console.error("listenFriends error:", err);
+        toast("Lỗi friends: " + (err?.message || err));
       }
+    );
+  }
 
-      // listen new
-      currentMsgsRef = rQuery(ref(rtdb, `chats/${currentChatId}/messages`), limitToLast(120));
-      currentMsgHandler = (snap) => {
-        const m = snap.val();
-        if (!m) return;
-        appendMessage(m);
-      };
-      onChildAdded(currentMsgsRef, currentMsgHandler);
 
-      setTimeout(() => chatInput.focus(), 200);
+    // ===== Chat (RTDB) =====
+    let currentChatId=null;
+    let currentMsgsRef=null;
+    let currentMsgHandler=null;
+
+    const chatBackdrop=$("chatBackdrop");
+    const chatBody=$("chatBody");
+    const chatInput=$("chatInput");
+
+    function fmtTime(ts){
+      try{
+        const d=new Date(ts);
+        return new Intl.DateTimeFormat("vi-VN",{hour:"2-digit",minute:"2-digit"}).format(d);
+      }catch{return "";}
     }
 
-    function closeChat() {
-      chatBackdrop.classList.remove("show");
-      if (currentMsgsRef && currentMsgHandler) {
-        off(currentMsgsRef, "child_added", currentMsgHandler);
-      }
-      currentChatUid = null;
-      currentChatId = null;
-      currentMsgsRef = null;
-      currentMsgHandler = null;
-    }
-
-    $("btnChatClose").onclick = closeChat;
-    chatBackdrop.onclick = (e) => {
-      // click outside modal closes
-      if (e.target === chatBackdrop) closeChat();
-    };
-
-    function fmtTime(ts) {
-      try {
-        const d = new Date(ts);
-        return new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit" }).format(d);
-      } catch { return ""; }
-    }
-
-    function appendMessage(m) {
+    function appendMessage(m){
       const isMe = m.from === me.uid;
-      const row = document.createElement("div");
-      row.className = "msg-row " + (isMe ? "me" : "other");
+      const row=document.createElement("div");
+      row.className="msg-row " + (isMe ? "me":"other");
 
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.textContent = m.text || "";
+      const bubble=document.createElement("div");
+      bubble.className="bubble";
+      bubble.textContent=m.text||"";
 
-      const time = document.createElement("div");
-      time.className = "msg-time";
-      if (m.ts && typeof m.ts === "number") time.textContent = fmtTime(m.ts);
-      else time.textContent = "";
+      const time=document.createElement("div");
+      time.className="msg-time";
+      time.textContent = (typeof m.ts==="number") ? fmtTime(m.ts) : "";
 
-      const wrap = document.createElement("div");
+      const wrap=document.createElement("div");
       wrap.appendChild(bubble);
       wrap.appendChild(time);
 
       row.appendChild(wrap);
       chatBody.appendChild(row);
-
-      // auto scroll
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    async function sendMessage() {
-      const text = chatInput.value.trim();
-      if (!text) return;
-      if (!me || !currentChatId) return;
+    function openChat(uid){
+      if(!me) return;
+      currentChatId = friendDocId(me.uid, uid);
 
-      chatInput.value = "";
-      try {
-        await push(ref(rtdb, `chats/${currentChatId}/messages`), {
-          from: me.uid,
+      const u = userCache.get(uid) || {};
+      $("chatAva").src = safeAva(u.photoURL);
+      $("chatTitle").textContent = u.displayName || "Bạn bè";
+      $("chatSub").textContent = u.email || ("UID: " + uid.slice(0,8) + "...");
+
+      chatBody.innerHTML="";
+      chatBackdrop.classList.add("show");
+      $("btnChatRoute").onclick=()=>startRoutingTo(uid);
+
+      if(currentMsgsRef && currentMsgHandler){
+        off(currentMsgsRef, "child_added", currentMsgHandler);
+      }
+
+      currentMsgsRef = rQuery(ref(rtdb, `chats/${currentChatId}/messages`), limitToLast(120));
+      currentMsgHandler = (snap)=>{
+        const m=snap.val();
+        if(m) appendMessage(m);
+      };
+      onChildAdded(currentMsgsRef, currentMsgHandler);
+
+      setTimeout(()=>chatInput.focus(), 200);
+    }
+
+    function closeChat(){
+      chatBackdrop.classList.remove("show");
+      if(currentMsgsRef && currentMsgHandler){
+        off(currentMsgsRef, "child_added", currentMsgHandler);
+      }
+      currentChatId=null;
+      currentMsgsRef=null;
+      currentMsgHandler=null;
+    }
+
+    $("btnChatClose").onclick=closeChat;
+    chatBackdrop.onclick=(e)=>{ if(e.target===chatBackdrop) closeChat(); };
+
+    async function sendMessage(){
+      const text=chatInput.value.trim();
+      if(!text) return;
+      if(!me || !currentChatId) return;
+      chatInput.value="";
+      try{
+        await push(ref(rtdb, `chats/${currentChatId}/messages`),{
+          from:me.uid,
           text,
-          ts: Date.now(),  // client timestamp for display
-          serverTs: rtdbServerTimestamp(), // server timestamp for later use if needed
-          name: me.displayName || "",
-          photoURL: me.photoURL || ""
+          ts:Date.now(),
+          serverTs:rtdbServerTimestamp(),
+          name:me.displayName||"",
+          photoURL:me.photoURL||""
         });
-      } catch(e) {
+      }catch(e){
         toast("Lỗi gửi tin: " + e.message);
       }
     }
+    $("btnChatSend").onclick=sendMessage;
+    chatInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter") sendMessage(); });
 
-    $("btnChatSend").onclick = sendMessage;
-    chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") sendMessage();
-    });
+    // ===== Auth =====
+    $("btnLogin").onclick = ()=>signInWithPopup(auth, provider).catch(e=>toast(e.message));
+    $("btnLogout").onclick = ()=>{ setSharingUI(false); signOut(auth); };
+    $("btnToggleShare").onclick = ()=>setSharingUI(!sharing);
 
-    // ====== Auth Flow ======
-    $("btnLogin").onclick = () => signInWithPopup(auth, provider).catch(e => toast(e.message));
-    $("btnLogout").onclick = () => { setSharingUI(false); signOut(auth); };
-    $("btnToggleShare").onclick = () => setSharingUI(!sharing);
+    onAuthStateChanged(auth, async (user)=>{
+      me=user;
 
-    onAuthStateChanged(auth, async (user) => {
-      me = user;
-
-      if (!me) {
+      if(!me){
         $("loginScreen").classList.remove("hidden");
         $("appScreen").classList.add("hidden");
         stopGeolocationWatch();
         detachAllFriendLocListeners();
         closeChat();
-      } else {
-        $("loginScreen").classList.add("hidden");
-        $("appScreen").classList.remove("hidden");
-
-        $("topName").textContent = me.displayName || "Me";
-        $("topAvatar").src = safeAva(me.photoURL);
-        $("userName").textContent = me.displayName || "";
-        $("userEmail").textContent = me.email || "";
-        $("userPhoto").src = safeAva(me.photoURL);
-
-        // cache me info
-        userCache.set(me.uid, { displayName: me.displayName || "", email: me.email || "", photoURL: me.photoURL || "" });
-
-        await ensureUserDoc(me);
-        await ensurePublicEmailIndex(me);
-
-        startGeolocationWatch();
-
-        const loc = await getDoc(doc(db, "locations", me.uid));
-        if (loc.exists()) await setSharingUI(!!loc.data().sharing);
-        else await setSharingUI(false);
-
-        listenIncoming();
-        listenFriends();
-
-        setTab("map");
-        toast("Chào " + (me.displayName || "bạn"));
+        if(myMarker){ map.removeLayer(myMarker); myMarker=null; }
+        return;
       }
+
+      $("loginScreen").classList.add("hidden");
+      $("appScreen").classList.remove("hidden");
+
+      $("topName").textContent = me.displayName || "Me";
+      $("topAvatar").src = safeAva(me.photoURL);
+      $("userName").textContent = me.displayName || "";
+      $("userEmail").textContent = me.email || "";
+      $("userPhoto").src = safeAva(me.photoURL);
+
+      userCache.set(me.uid,{displayName:me.displayName||"", email:me.email||"", photoURL:me.photoURL||""});
+
+      await ensureUserDoc(me);
+      await ensurePublicEmailIndex(me);
+
+      startGeolocationWatch();
+
+      const loc = await getDoc(doc(db,"locations",me.uid));
+      if(loc.exists()) await setSharingUI(!!loc.data().sharing);
+      else await setSharingUI(false);
+
+      listenIncoming();
+      listenFriends();
+
+      setTab("map");
+      toast("Chào " + (me.displayName || "bạn"));
     });
   </script>
 </body>
