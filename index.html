@@ -21,9 +21,6 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- plugin rotate (nếu browser hỗ trợ) -->
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
-
   <style>
     :root{
       --bg-color:#f8fafc;
@@ -75,6 +72,26 @@
     }
     .inp:focus{border-color:var(--primary);background:#fff;}
 
+    /* ===== Loading ===== */
+    .loading-screen{
+      height:100%;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:20px;text-align:center;
+      background:linear-gradient(135deg,#e0f2fe 0%,#f0f9ff 100%);
+    }
+    .spinner{
+      width:44px;height:44px;border-radius:999px;
+      border:4px solid rgba(37,99,235,0.20);
+      border-top-color: rgba(37,99,235,1);
+      animation:spin 0.9s linear infinite;
+      margin-bottom:14px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-title{font-size:16px;font-weight:800;margin:0 0 6px;}
+    .loading-sub{font-size:13px;color:var(--text-muted);margin:0;}
+
+    /* ===== Login ===== */
     .login-screen{
       height:100%;
       display:flex;flex-direction:column;
@@ -103,6 +120,7 @@
     .login-title{font-size:22px;font-weight:800;margin:0 0 8px;}
     .login-sub{font-size:14px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;}
 
+    /* ===== App ===== */
     .app-screen{display:flex;flex-direction:column;height:100%;position:relative;}
 
     .topbar{
@@ -180,7 +198,6 @@
     .list-info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .list-info small{display:block;color:var(--text-muted);font-size:11px;margin-top:2px;}
 
-    /* ✅ checkbox chọn bạn */
     .friend-check{
       width:18px;height:18px;
       accent-color: var(--primary);
@@ -234,6 +251,7 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(calc(var(--safe-t) + 10px));}
 
+    /* Markers */
     .avatar-marker{background:transparent;border:none;}
     .avatar-wrap{
       width:44px;height:44px;border-radius:50%;
@@ -245,6 +263,7 @@
     .ring-friend{border:3px solid #2563eb;}
     .ring-off{border:3px solid #94a3b8;opacity:.85;}
 
+    /* Modals */
     .modal-backdrop{
       position:fixed;inset:0;
       background:rgba(15,23,42,0.35);
@@ -309,16 +328,13 @@
       width:fit-content;
       max-width:100%;
       min-width:44px;
-
       padding:10px 12px;
       border-radius:16px;
       font-size:14px;
       line-height:1.35;
-
       box-shadow:0 6px 16px rgba(0,0,0,0.06);
       border:1px solid rgba(0,0,0,0.04);
       background:#fff;
-
       white-space:normal;
       overflow-wrap:anywhere;
       word-break:normal;
@@ -329,7 +345,6 @@
     }
 
     .msg-time{font-size:10px;color:#64748b;margin-top:4px;text-align:right;}
-
     .seen-line{
       padding:0 12px 10px;
       font-size:11px;
@@ -362,19 +377,10 @@
       .msg-wrap{max-width:86%;}
     }
 
-    /* Leaflet control nhìn gọn */
-    .leaflet-control-layers{
-      border-radius:14px!important;
-      overflow:hidden;
-      box-shadow:0 10px 26px rgba(0,0,0,0.12);
-    }
-    .leaflet-control-layers label{font-family:Inter, sans-serif;}
-
-    /* ✅ Group action bar (hiện khi tick chọn bạn) */
     .group-actionbar{
       position:absolute;
       left:12px; right:12px;
-      bottom:calc(var(--safe-b) + 86px); /* nằm trên bottom-nav */
+      bottom:calc(var(--safe-b) + 86px);
       z-index:1500;
       background:rgba(255,255,255,0.92);
       border:1px solid rgba(0,0,0,0.08);
@@ -393,14 +399,22 @@
 <body>
   <div id="toast" class="toast">Thông báo</div>
 
-  <section id="loginScreen" class="login-screen">
+  <!-- 4) LOADING khi đang xác nhận đăng nhập -->
+  <section id="loadingScreen" class="loading-screen">
+    <div class="spinner"></div>
+    <p class="loading-title">Đang kiểm tra đăng nhập…</p>
+    <p class="loading-sub">Vui lòng chờ một chút</p>
+  </section>
+
+  <!-- Login: mặc định ẩn, chỉ hiện sau khi auth check xong và chưa đăng nhập -->
+  <section id="loginScreen" class="login-screen hidden">
     <div class="login-card">
       <div class="app-logo">🗺️</div>
       <h1 class="login-title">Friends Map</h1>
       <p class="login-sub">Xem vị trí bạn bè thời gian thực.<br>Kết nối ngay, không lạc lối.</p>
       <button id="btnLogin" class="btn primary" style="width:100%;height:50px;">Đăng nhập với Google</button>
       <div style="margin-top:24px;font-size:12px;color:var(--text-muted);border-top:1px solid #e2e8f0;padding-top:16px;">
-        *Lưu ý: Nếu dùng máy tính bàn, vị trí có thể không chuẩn. Dùng điện thoại sẽ chuẩn hơn.
+        *Lưu ý: Dùng điện thoại sẽ định vị chuẩn hơn.
       </div>
     </div>
   </section>
@@ -431,18 +445,7 @@
           <p class="login-sub" style="margin:8px 0 0;font-size:11px;">Họ phải đăng nhập app này ít nhất 1 lần rồi mới kết bạn được.</p>
         </div>
 
-        <!-- ✅ GROUP CHAT (cũ: nhập email) -->
-        <div class="glass-card">
-          <div class="card-head">👨‍👩‍👧‍👦 Tạo nhóm chat (nhập email)</div>
-          <input id="groupName" class="inp" placeholder="Tên nhóm (vd: Hội Linh Đàm)" style="margin-bottom:10px;" />
-          <input id="groupMembers" class="inp" placeholder="Email thành viên (cách nhau bằng dấu phẩy)" style="margin-bottom:10px;" />
-          <button id="btnCreateGroup" class="btn primary" style="width:100%">Tạo nhóm</button>
-          <p class="login-sub" style="margin:8px 0 0;font-size:11px;">
-            Gợi ý: nhập email bạn bè đã dùng app. Ví dụ: a@gmail.com, b@gmail.com
-          </p>
-        </div>
-
-        <!-- ✅ GROUP CHAT (mới: tick chọn bạn) -->
+        <!-- 1) BỎ tạo nhóm thủ công (nhập email) => chỉ giữ tick -->
         <div class="glass-card">
           <div class="card-head">✅ Tạo nhóm chat (tick chọn bạn)</div>
           <p class="login-sub" style="margin:0;font-size:12px;">
@@ -490,12 +493,11 @@
         <button id="btnLogout" class="btn danger" style="width:100%;justify-content:center;">Đăng xuất</button>
 
         <div style="text-align:center;margin-top:30px;font-size:11px;color:var(--text-muted);">
-          Friends Map v3.3 - Map modes + Seen + Tick Group
+          Friends Map v3.5 - Single Map + Tick Group + Better Auth Loading
         </div>
       </div>
     </div>
 
-    <!-- ✅ Action bar tạo nhóm (hiện khi tick chọn bạn) -->
     <div id="groupActionBar" class="group-actionbar hidden">
       <div class="gab-left"><b id="gabCount">0</b> đã chọn</div>
       <button id="btnOpenGroupModal" class="btn primary" style="padding:10px 12px;border-radius:14px;">
@@ -516,7 +518,7 @@
     </nav>
   </section>
 
-  <!-- ✅ Modal chat -->
+  <!-- Chat modal -->
   <div id="chatBackdrop" class="modal-backdrop">
     <div class="chat-modal">
       <div class="chat-head">
@@ -546,7 +548,7 @@
     </div>
   </div>
 
-  <!-- ✅ Modal tạo nhóm từ tick -->
+  <!-- Group create modal (tick) -->
   <div id="groupBackdrop" class="modal-backdrop">
     <div class="chat-modal" style="height:auto;max-height:78vh;">
       <div class="chat-head">
@@ -580,7 +582,7 @@
       collection, addDoc, query, where, onSnapshot, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import {
-      getDatabase, ref, push, set, update,
+      getDatabase, ref, push, set, update, onDisconnect, onValue,
       onChildAdded, onChildChanged, off,
       query as rQuery, limitToLast,
       serverTimestamp as rtdbServerTimestamp
@@ -616,6 +618,10 @@
     function safeAva(url){ return url || "https://www.gravatar.com/avatar/?d=mp&s=96"; }
     function friendDocId(a,b){ return (a<b)?`${a}_${b}`:`${b}_${a}`; }
 
+    // ===== RTDB Paths =====
+    const liveLocPath = (uid) => `liveLocations/${uid}`; // realtime location
+    const statusPath  = (uid) => `status/${uid}`;        // presence online/offline
+
     // ===== Tabs =====
     const views = { map: $("viewMap"), friends: $("viewFriends"), profile: $("viewProfile") };
     const tabs = { map: $("tabMap"), friends: $("tabFriends"), profile: $("tabProfile") };
@@ -642,47 +648,30 @@
     $("btnGoProfile").onclick=()=>setTab("profile");
 
     // ===== Map =====
-    const map = L.map("map", {
-      zoomControl:false,
-      rotate: true,
-      touchRotate: true,
-      rotateControl: true,
-      bearing: 0
-    }).setView([21.0278,105.8342], 13);
+    // 2) BỎ nhiều chế độ bản đồ: chỉ dùng 1 lớp OSM
+    const map = L.map("map", { zoomControl:false }).setView([21.0278,105.8342], 13);
     window.__leafletMap = map;
 
-    const layerOSM = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: "© OpenStreetMap"
-    });
-    const layerSatellite = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { maxZoom: 19, attribution: "Tiles © Esri" }
-    );
-    const layerTopo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-      maxZoom: 17, attribution: "© OpenTopoMap"
-    });
-    const layerDark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19, attribution: "© CARTO"
-    });
-
-    layerOSM.addTo(map);
-    L.control.layers({
-      "🗺️ Thường (OSM)": layerOSM,
-      "🛰️ Vệ tinh (Esri)": layerSatellite,
-      "⛰️ Địa hình (Topo)": layerTopo,
-      "🌙 Tối (Dark)": layerDark
-    }, null, { position:"topleft" }).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap"
+    }).addTo(map);
 
     let me = null;
     let myMarker = null;
     const friendMarkers = new Map();
     const friendLocs = new Map();
     const userCache = new Map();
+    const friendPresence = new Map(); // uid -> {state,lastChanged}
 
     let routeLayer = null;
     let routingToUid = null;
 
-    function makeAvatarIcon(photoURL, isMe, isSharing=true){
+    // ===== Sharing =====
+    // 3) kiểm tra lại on/off: icon + push realtime phải theo sharing
+    let sharing = false;
+
+    function makeAvatarIcon(photoURL, isMe, isSharing){
       const ring = isSharing ? (isMe ? "ring-me" : "ring-friend") : "ring-off";
       return L.divIcon({
         className:"avatar-marker",
@@ -695,7 +684,7 @@
 
     function upsertMyMarker(lat,lng){
       const pos=[lat,lng];
-      const icon = makeAvatarIcon(me?.photoURL, true, true);
+      const icon = makeAvatarIcon(me?.photoURL, true, sharing);
       if(!myMarker){
         myMarker = L.marker(pos,{icon}).addTo(map).bindPopup("<b>📍 Bạn đang ở đây</b>");
       }else{
@@ -706,13 +695,18 @@
 
     function friendPopupHtml(fid){
       const u = userCache.get(fid) || {};
+      const pr = friendPresence.get(fid);
+      const isOn = pr?.state === "online";
+      const sub1 = u.email || ("UID: " + fid.slice(0,6) + "...");
+      const sub2 = isOn ? "🟢 Online" : "⚪ Offline";
       return `
         <div>
           <div class="pop">
             <img src="${safeAva(u.photoURL)}" />
             <div>
               <b>${u.displayName || "Bạn bè"}</b>
-              <small>${u.email || ("UID: " + fid.slice(0,6) + "...")}</small>
+              <small>${sub1}</small>
+              <small>${sub2}</small>
             </div>
           </div>
           <div class="pop-actions">
@@ -778,9 +772,48 @@
       );
     }
 
+    // Push realtime lên RTDB (throttle 2s) - chỉ khi sharing=true
+    async function pushLiveLocation(force=false){
+      if(!me || !sharing || !lastPos) return;
+      const now = Date.now();
+      if(!force && now - (window.__lastPushTs||0) < 2000) return;
+      window.__lastPushTs = now;
+
+      try{
+        await set(ref(rtdb, liveLocPath(me.uid)), {
+          sharing: true,
+          lat: lastPos.lat,
+          lng: lastPos.lng,
+          updatedAt: now,
+          name: me.displayName || "",
+          photoURL: me.photoURL || ""
+        });
+      }catch(e){
+        console.error("pushLiveLocation error:", e);
+      }
+    }
+
+    async function pushShareOff(){
+      if(!me) return;
+      try{
+        await set(ref(rtdb, liveLocPath(me.uid)), {
+          sharing: false,
+          updatedAt: Date.now(),
+          name: me.displayName || "",
+          photoURL: me.photoURL || ""
+        });
+      }catch(e){
+        console.error("pushShareOff error:", e);
+      }
+    }
+
     function updateMyPos(pos){
       lastPos = { lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now() };
       upsertMyMarker(lastPos.lat,lastPos.lng);
+
+      // realtime chỉ khi sharing ON
+      pushLiveLocation(false);
+
       if(routingToUid) drawRouteTo(routingToUid, false);
     }
 
@@ -878,44 +911,67 @@
       return data;
     }
 
-    // ===== Sharing =====
-    let sharing=false;
-    let lastSentAt=0;
+    // ===== Presence (RTDB) =====
+    async function startPresence(){
+      if(!me) return;
+      const stRef = ref(rtdb, statusPath(me.uid));
+
+      await onDisconnect(stRef).set({
+        state: "offline",
+        lastChanged: Date.now()
+      });
+
+      await set(stRef, {
+        state: "online",
+        lastChanged: Date.now(),
+        name: me.displayName || "",
+        photoURL: me.photoURL || ""
+      });
+    }
+
+    // Best effort flush khi ẩn/đóng tab
+    function bindLifecycleHooks(){
+      const flush = async ()=>{
+        try{
+          if(me && sharing && lastPos) await pushLiveLocation(true);
+        }catch{}
+      };
+      window.addEventListener("pagehide", flush, { capture:true });
+      document.addEventListener("visibilitychange", ()=>{
+        if(document.visibilityState === "hidden") flush();
+      });
+    }
 
     async function setSharingUI(on){
-      sharing=on;
-      const btn=$("btnToggleShare");
-      const label=$("shareDesc");
+      sharing = !!on;
+
+      const btn = $("btnToggleShare");
+      const label = $("shareDesc");
 
       if(sharing){
-        btn.textContent="Tắt"; btn.className="btn danger";
+        btn.textContent="Tắt";
+        btn.className="btn danger";
         label.textContent="🟢 Đang chia sẻ.";
+        if(lastPos) await pushLiveLocation(true);
       }else{
-        btn.textContent="Bật"; btn.className="btn success";
+        btn.textContent="Bật";
+        btn.className="btn success";
         label.textContent="⚪ Đang ẩn.";
+        await pushShareOff();
       }
 
+      // Backup Firestore locations (tuỳ chọn)
       if (me) {
         const payload = { sharing, updatedAt: serverTimestamp() };
         if (sharing && lastPos) { payload.lat = lastPos.lat; payload.lng = lastPos.lng; }
         await setDoc(doc(db, "locations", me.uid), payload, { merge: true });
       }
+
+      // cập nhật icon marker của mình theo sharing
       if(lastPos && me) upsertMyMarker(lastPos.lat,lastPos.lng);
     }
 
-    setInterval(async ()=>{
-      if(!me || !sharing || !lastPos) return;
-      const now=Date.now();
-      if(now-lastSentAt<5000) return;
-      try{
-        await setDoc(doc(db,"locations",me.uid),{
-          sharing:true, lat:lastPos.lat, lng:lastPos.lng, updatedAt:serverTimestamp()
-        },{merge:true});
-        lastSentAt=now;
-      }catch{}
-    },2000);
-
-    // ===== Friends + Locations =====
+    // ===== Friends Requests =====
     $("btnSendRequest").onclick = async ()=>{
       const email=$("friendEmail").value.trim();
       if(!email) return toast("Chưa nhập email!");
@@ -928,12 +984,15 @@
         });
         toast("Đã gửi lời mời!");
         $("friendEmail").value="";
-      }catch(e){ toast("Lỗi: " + e.message); }
+      }catch(e){ toast("Lỗi: " + (e.message || e)); }
     };
 
     let unsubIncoming=null;
     let unsubFriends=null;
-    const unsubLocs=new Map();
+    let unsubGroups=null;
+
+    const unsubLocs=new Map();   // uid -> unsubscribe fn (location)
+    const unsubStatus=new Map(); // uid -> unsubscribe fn (presence)
 
     function listenIncoming(){
       if(unsubIncoming) unsubIncoming();
@@ -974,7 +1033,9 @@
               users: { [me.uid]: true, [r.from]: true },
               createdAt: serverTimestamp()
             }, { merge: true });
+
             await attachFriendLocationListener(r.from);
+            await attachFriendPresenceListener(r.from);
             toast("Đã chấp nhận!");
           };
 
@@ -988,53 +1049,83 @@
       });
     }
 
+    async function attachFriendPresenceListener(fid){
+      if(unsubStatus.has(fid)) return;
+
+      const stRef = ref(rtdb, statusPath(fid));
+      const handler = (snap)=>{
+        if(!snap.exists()) friendPresence.delete(fid);
+        else friendPresence.set(fid, snap.val() || {});
+        const mk = friendMarkers.get(fid);
+        if(mk) mk.setPopupContent(friendPopupHtml(fid));
+      };
+
+      onValue(stRef, handler, (err)=>console.error("presence listener err:", err));
+      unsubStatus.set(fid, ()=> off(stRef, "value", handler));
+    }
+
+    // Listen vị trí bạn bè từ RTDB liveLocations/<uid>
     async function attachFriendLocationListener(fid){
       if(unsubLocs.has(fid)) return;
       await getUserInfo(fid);
 
-      const unsub = onSnapshot(
-        doc(db,"locations",fid),
-        (locSnap)=>{
-          if(!locSnap.exists()){
-            friendLocs.delete(fid);
-            removeFriendMarker(fid);
-            if(routingToUid===fid) clearRoute();
-            return;
-          }
-
-          const l = locSnap.data();
-          friendLocs.set(fid,l);
-
-          if(!l.sharing){
-            removeFriendMarker(fid);
-            if(routingToUid===fid) clearRoute();
-            return;
-          }
-
-          if(typeof l.lat !== "number" || typeof l.lng !== "number"){
-            removeFriendMarker(fid);
-            return;
-          }
-
-          upsertFriendMarker(fid, l.lat, l.lng, true);
-
-          if(routingToUid === fid){
-            drawRouteTo(fid, false);
-          }
-        },
-        (err)=>{
-          console.error("locations listener error:", err);
-          toast("Không đọc được vị trí bạn bè: " + (err?.message || err));
+      const locRef = ref(rtdb, liveLocPath(fid));
+      const handler = (snap)=>{
+        if(!snap.exists()){
+          friendLocs.delete(fid);
+          removeFriendMarker(fid);
+          if(routingToUid===fid) clearRoute();
+          return;
         }
-      );
 
-      unsubLocs.set(fid, unsub);
+        const l = snap.val() || {};
+        friendLocs.set(fid,l);
+
+        const u = userCache.get(fid) || {};
+        if((l.name && !u.displayName) || (l.photoURL && !u.photoURL)){
+          userCache.set(fid, {
+            ...u,
+            displayName: u.displayName || l.name || "Bạn bè",
+            photoURL: u.photoURL || l.photoURL || ""
+          });
+        }
+
+        if(!l.sharing){
+          removeFriendMarker(fid);
+          if(routingToUid===fid) clearRoute();
+          return;
+        }
+
+        if(typeof l.lat !== "number" || typeof l.lng !== "number"){
+          removeFriendMarker(fid);
+          return;
+        }
+
+        upsertFriendMarker(fid, l.lat, l.lng, true);
+
+        if(routingToUid === fid){
+          drawRouteTo(fid, false);
+        }
+      };
+
+      onValue(locRef, handler, (err)=>{
+        console.error("liveLocations listener error:", err);
+        toast("Không đọc được vị trí bạn bè: " + (err?.message || err));
+      });
+
+      unsubLocs.set(fid, ()=> off(locRef, "value", handler));
     }
 
     function detachAllFriendLocListeners(){
       unsubLocs.forEach((unsub)=>{ try{unsub();}catch{} });
       unsubLocs.clear();
+
+      unsubStatus.forEach((unsub)=>{ try{unsub();}catch{} });
+      unsubStatus.clear();
+
       friendLocs.clear();
+      friendPresence.clear();
+
       friendMarkers.forEach((m,uid)=>removeFriendMarker(uid));
       clearRoute();
     }
@@ -1112,7 +1203,6 @@
       }
     };
 
-    // ===== listenFriends (đã thêm checkbox) =====
     function listenFriends() {
       if (unsubFriends) unsubFriends();
       const qy = query(collection(db, "friends"), where(`users.${me.uid}`, "==", true));
@@ -1137,7 +1227,12 @@
             if (!current.has(fid)) {
               try { unsubLocs.get(fid)(); } catch {}
               unsubLocs.delete(fid);
+
+              try { unsubStatus.get(fid)(); } catch {}
+              unsubStatus.delete(fid);
+
               friendLocs.delete(fid);
+              friendPresence.delete(fid);
               removeFriendMarker(fid);
               if (routingToUid === fid) clearRoute();
 
@@ -1149,6 +1244,10 @@
           for (const fid of friends) {
             const u = await getUserInfo(fid);
 
+            const pr = friendPresence.get(fid);
+            const isOn = pr?.state === "online";
+            const statusTxt = isOn ? "🟢 Online" : "⚪ Offline";
+
             const div = document.createElement("div");
             div.className = "list-item";
             div.innerHTML = `
@@ -1158,6 +1257,7 @@
                 <div class="list-info" style="cursor:pointer;">
                   <b>${u.displayName || "Bạn bè"}</b>
                   <small>${u.email || ("UID: " + fid.slice(0,8) + "...")}</small>
+                  <small>${statusTxt}</small>
                 </div>
               </div>
               <div style="display:flex; gap:8px; flex: 0 0 auto;">
@@ -1186,7 +1286,9 @@
             };
 
             list.appendChild(div);
-            attachFriendLocationListener(fid);
+
+            await attachFriendLocationListener(fid);
+            await attachFriendPresenceListener(fid);
           }
         },
         (err) => {
@@ -1195,44 +1297,6 @@
         }
       );
     }
-
-    // ===== GROUPS (Firestore) =====
-    let unsubGroups = null;
-
-    async function createGroupByEmails(){
-      const name = $("groupName").value.trim();
-      const raw = $("groupMembers").value.trim();
-
-      if(!name) return toast("Chưa nhập tên nhóm!");
-      const emails = raw ? raw.split(",").map(s=>s.trim()).filter(Boolean) : [];
-
-      const members = { [me.uid]: true };
-
-      for(const em of emails){
-        const uid = await findUidByEmail(em);
-        if(uid) members[uid] = true;
-      }
-
-      if(Object.keys(members).length < 2){
-        return toast("Nhóm cần ít nhất 1 thành viên ngoài bạn.");
-      }
-
-      await addDoc(collection(db, "groups"),{
-        name,
-        owner: me.uid,
-        members,
-        createdAt: serverTimestamp()
-      });
-
-      $("groupName").value="";
-      $("groupMembers").value="";
-      toast("✅ Đã tạo nhóm!");
-    }
-
-    $("btnCreateGroup").onclick = async ()=>{
-      try{ await createGroupByEmails(); }
-      catch(e){ toast("Lỗi tạo nhóm: " + (e.message||e)); }
-    };
 
     function listenGroups(){
       if(unsubGroups) unsubGroups();
@@ -1269,13 +1333,13 @@
 
     // ===== Chat (RTDB) =====
     let currentChatType = null;        // "dm" | "group"
-    let currentChatId = null;          // dmId hoặc groupId
+    let currentChatId = null;
     let currentMsgsRef = null;
 
     let currentAddedHandler = null;
     let currentChangedHandler = null;
 
-    let currentPeerUid = null;         // chỉ dùng cho dm
+    let currentPeerUid = null;
     let lastOutgoingKey = null;
 
     const chatBackdrop=$("chatBackdrop");
@@ -1299,7 +1363,6 @@
 
     function appendMessage(m){
       const isMe = m.from === me.uid;
-
       const row = document.createElement("div");
       row.className = "msg-row " + (isMe ? "me" : "other");
 
@@ -1348,7 +1411,6 @@
         });
       }catch(e){
         console.error("markRead error:", e);
-        toast("Lỗi đã xem: " + (e?.message || e));
       }
     }
 
@@ -1378,7 +1440,6 @@
       currentChangedHandler = (snap)=>{
         const m = snap.val();
         if(!m) return;
-
         if(m.from === me.uid){
           setSeenTextForMessage(m, snap.key);
         }
@@ -1425,7 +1486,6 @@
       });
 
       $("btnChatRoute").onclick = ()=> startRoutingTo(uid);
-
       attachChatListeners();
     }
 
@@ -1475,7 +1535,6 @@
       if(!me || !currentChatType || !currentChatId) return;
 
       chatInput.value = "";
-
       const p = chatPath();
       if(!p) return;
 
@@ -1505,26 +1564,59 @@
 
     // ===== Auth =====
     $("btnLogin").onclick = ()=>signInWithPopup(auth, provider).catch(e=>toast(e.message));
-    $("btnLogout").onclick = ()=>{ setSharingUI(false); signOut(auth); };
+    $("btnLogout").onclick = async ()=>{
+      try{
+        await setSharingUI(false);
+      }catch{}
+      await signOut(auth);
+    };
     $("btnToggleShare").onclick = ()=>setSharingUI(!sharing);
 
+    // ===== UI switch =====
+    function showLoading(){
+      $("loadingScreen").classList.remove("hidden");
+      $("loginScreen").classList.add("hidden");
+      $("appScreen").classList.add("hidden");
+    }
+    function showLogin(){
+      $("loadingScreen").classList.add("hidden");
+      $("loginScreen").classList.remove("hidden");
+      $("appScreen").classList.add("hidden");
+    }
+    function showApp(){
+      $("loadingScreen").classList.add("hidden");
+      $("loginScreen").classList.add("hidden");
+      $("appScreen").classList.remove("hidden");
+    }
+
+    // ===== onAuth (4) Loading khi xác nhận đăng nhập =====
+    showLoading();
+    let authResolvedOnce = false;
+
     onAuthStateChanged(auth, async (user)=>{
-      me=user;
+      me = user;
+
+      // lần đầu callback => auth check xong
+      if(!authResolvedOnce){
+        authResolvedOnce = true;
+      }
 
       if(!me){
-        $("loginScreen").classList.remove("hidden");
-        $("appScreen").classList.add("hidden");
+        // reset app state
         stopGeolocationWatch();
         detachAllFriendLocListeners();
         closeChat();
         if(myMarker){ map.removeLayer(myMarker); myMarker=null; }
+
         selectedFriends.clear();
         updateGroupBarUI();
+
+        showLogin();
         return;
       }
 
-      $("loginScreen").classList.add("hidden");
-      $("appScreen").classList.remove("hidden");
+      // logged in
+      showApp();
 
       $("topName").textContent = me.displayName || "Me";
       $("topAvatar").src = safeAva(me.photoURL);
@@ -1537,8 +1629,12 @@
       await ensureUserDoc(me);
       await ensurePublicEmailIndex(me);
 
+      await startPresence();
+      bindLifecycleHooks();
+
       startGeolocationWatch();
 
+      // load share state từ Firestore (backup)
       const loc = await getDoc(doc(db,"locations",me.uid));
       if(loc.exists()) await setSharingUI(!!loc.data().sharing);
       else await setSharingUI(false);
