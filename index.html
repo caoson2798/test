@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-  <!-- ✅ MapLibre GL (xoay bản đồ + label quay theo) -->
+  <!-- ✅ MapLibre GL -->
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
@@ -131,21 +131,34 @@
       background:#f1f5f9;
     }
     #viewMap.view-container{padding:0;background:transparent;bottom:0;overflow:hidden;}
-    #map{width:100%;height:100%;z-index:1;}
+    #map{width:100%;height:100%;z-index:1;position:relative;}
 
-    .locate-btn{
-      position:absolute;
-      bottom:calc(96px + var(--safe-b));
-      right:16px;
-      z-index:999;
-      width:48px;height:48px;
-      background:#fff;border-radius:50%;
-      box-shadow:0 4px 15px rgba(0,0,0,0.15);
-      display:grid;place-items:center;
-      font-size:20px;cursor:pointer;
-      border:1px solid rgba(0,0,0,0.05);
+    /* ====== FIX: MapLibre controls luôn bấm được ====== */
+    .maplibregl-control-container,
+    .maplibregl-ctrl,
+    .maplibregl-ctrl-group{
+      pointer-events:auto !important;
+      z-index: 1200 !important;
     }
-    .locate-btn:active{transform:scale(.9);}
+
+    /* ✅ ẨN + / - (zoom buttons) dù có add control hay không */
+    .maplibregl-ctrl-zoom-in,
+    .maplibregl-ctrl-zoom-out{
+      display:none !important;
+    }
+
+    /* ✅ style control button (nút định vị custom) */
+    .maplibregl-ctrl-group button{
+      width:46px;height:46px;
+    }
+    .maplibregl-ctrl-group button:focus{outline:none;}
+    .maplibregl-ctrl-group{
+      border-radius:16px !important;
+      overflow:hidden;
+      box-shadow:0 4px 15px rgba(0,0,0,0.15);
+      border:1px solid rgba(0,0,0,0.05);
+      background:#fff;
+    }
 
     .route-btn{
       position:absolute;
@@ -154,6 +167,7 @@
       z-index:999;
       display:flex;gap:10px;
       flex-wrap:wrap;
+      pointer-events:auto;
     }
 
     .glass-card{
@@ -383,16 +397,12 @@
     }
     @keyframes spin{to{transform:rotate(360deg);}}
 
-    /* ✅ MapLibre popup fix (đẹp hơn chút) */
+    /* popup */
     .maplibregl-popup-content{
       border-radius:16px !important;
       box-shadow:0 15px 40px rgba(0,0,0,0.18) !important;
       padding:12px !important;
       font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif !important;
-    }
-    .maplibregl-ctrl-group{
-      border-radius:14px !important;
-      overflow:hidden;
     }
   </style>
 </head>
@@ -433,8 +443,6 @@
     <div class="content-area">
       <div id="viewMap" class="view-container">
         <div id="map"></div>
-
-        <div class="locate-btn" id="btnLocateMe" title="Tìm lại vị trí">🎯</div>
 
         <div class="route-btn">
           <button id="btnClearRoute" class="btn secondary" style="padding:10px 12px;border-radius:14px;">🧹 Xóa đường</button>
@@ -506,7 +514,7 @@
         <button id="btnLogout" class="btn danger" style="width:100%;justify-content:center;">Đăng xuất</button>
 
         <div style="text-align:center;margin-top:30px;font-size:11px;color:var(--text-muted);">
-          Friends Map v3.6 - Compass Rotate + Notifications
+          Friends Map v3.7 - Clean Map UI
         </div>
       </div>
     </div>
@@ -561,7 +569,7 @@
     </div>
   </div>
 
-  <!-- ✅ Modal tạo nhóm từ tick -->
+  <!-- ✅ Modal tạo nhóm -->
   <div id="groupBackdrop" class="modal-backdrop">
     <div class="chat-modal" style="height:auto;max-height:78vh;">
       <div class="chat-head">
@@ -634,7 +642,6 @@
     const liveLocPath = (uid) => `liveLocations/${uid}`;
     const statusPath  = (uid) => `status/${uid}`;
     const inboxPath   = (uid) => `inbox/${uid}`;
-
     const inboxKeyDM = (dmId)=> `dm_${dmId}`;
     const inboxKeyGroup = (gid)=> `group_${gid}`;
 
@@ -664,20 +671,70 @@
     $("btnGoProfile").onclick=()=>setTab("profile");
 
     // ===== Map (MapLibre) =====
+    // ✅ Bản đồ rõ: CARTO Positron
     const map = new maplibregl.Map({
       container: "map",
-      style: "https://demotiles.maplibre.org/style.json",
+      style: {
+        version: 8,
+        sources: {
+          base: {
+            type: "raster",
+              tiles: [
+                "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+                "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+                "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+                "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
+              ],
+              tileSize: 256,
+              attribution: "© OpenStreetMap contributors © CARTO"
+          }
+        },
+        layers: [{ id: "base", type: "raster", source: "base" }]
+      },
       center: [105.8342, 21.0278],
-      zoom: 13,
-      bearing: 0,
-      pitch: 0,
-      dragRotate: true,
-      touchZoomRotate: true
+      zoom: 15
     });
+
     window.__maplibre = map;
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass:true, showZoom:true }), "bottom-right");
+    // Chỉ để attribution nhỏ gọn
     map.addControl(new maplibregl.AttributionControl({ compact:true }), "top-left");
+
+    // ✅ NÚT ĐỊNH VỊ (Control) => không bị chồng / luôn bấm được
+    class LocateMeControl {
+      onAdd(map){
+        this._map = map;
+        this._container = document.createElement("div");
+        this._container.className = "maplibregl-ctrl maplibregl-ctrl-group";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.title = "Vị trí của tôi";
+
+        // icon mới (mũi tên định vị)
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path fill="currentColor" d="M12 2l3.2 7.5L23 12l-7.8 2.5L12 22l-3.2-7.5L1 12l7.8-2.5L12 2zm0 5.4L10.4 11 7 12l3.4 1 1.6 3.6 1.6-3.6L17 12l-3.4-1L12 7.4z"/>
+          </svg>
+        `;
+
+        btn.addEventListener("click", (e)=>{
+          e.preventDefault();
+          e.stopPropagation();
+          if(typeof window.__requestLocation === "function"){
+            window.__requestLocation(true);
+          }
+        });
+
+        this._container.appendChild(btn);
+        return this._container;
+      }
+      onRemove(){
+        this._container.parentNode?.removeChild(this._container);
+        this._map = undefined;
+      }
+    }
+
+    map.addControl(new LocateMeControl(), "bottom-right");
 
     // route layer init
     map.on("load", ()=>{
@@ -690,7 +747,11 @@
         type: "line",
         source: "route",
         layout: { "line-join":"round", "line-cap":"round" },
-        paint: { "line-width": 5, "line-opacity": 0.9 }
+        paint: {
+          "line-color": "#2563eb",
+          "line-width": 5,
+          "line-opacity": 0.9
+        }
       });
     });
 
@@ -698,8 +759,8 @@
     let sharing=false;
 
     // markers
-    let myMarker = null; // maplibre Marker
-    const friendMarkers = new Map(); // uid -> Marker
+    let myMarker = null;
+    const friendMarkers = new Map();
     const friendLocs = new Map();
     const userCache = new Map();
     const friendPresence = new Map();
@@ -812,6 +873,7 @@
     function requestLocation(manual=false){
       if(!navigator.geolocation) return toast("Máy không có GPS");
       if(manual) toast("Đang dò vị trí...");
+
       navigator.geolocation.getCurrentPosition(
         (pos)=>{
           updateMyPos(pos);
@@ -824,6 +886,8 @@
         { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
       );
     }
+    // expose cho control gọi
+    window.__requestLocation = requestLocation;
 
     async function pushLiveLocation(force=false){
       if(!me || !sharing || !lastPos) return;
@@ -884,8 +948,6 @@
       if(watchId!=null){ navigator.geolocation.clearWatch(watchId); watchId=null; }
     }
 
-    $("btnLocateMe").onclick=()=>requestLocation(true);
-
     // ===== Routing (OSRM -> geojson line) =====
     function clearRoute(){
       routingToUid=null;
@@ -927,7 +989,7 @@
         const data = await res.json();
         if(!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
 
-        const geo = data.routes[0].geometry; // geojson line with [lng,lat]
+        const geo = data.routes[0].geometry;
         const feature = { type:"Feature", geometry: geo, properties:{} };
 
         if(map.getSource("route")){
@@ -947,20 +1009,13 @@
       }
     }
 
-    // ===== Compass rotate (xoay theo la bàn) =====
+    // ===== Compass rotate =====
     let compassOn = false;
     let lastBearingApplied = null;
 
     function getBearingFromEvent(e){
-      // iOS Safari
-      if(typeof e.webkitCompassHeading === "number"){
-        return e.webkitCompassHeading; // 0..360, 0 = North
-      }
-      // Android/others: alpha = rotation around z-axis (0..360)
-      if(typeof e.alpha === "number"){
-        // thường alpha tăng theo chiều kim đồng hồ, map bearing cũng vậy
-        return e.alpha;
-      }
+      if(typeof e.webkitCompassHeading === "number") return e.webkitCompassHeading;
+      if(typeof e.alpha === "number") return e.alpha;
       return null;
     }
 
@@ -968,8 +1023,6 @@
       if(!compassOn) return;
       const b = getBearingFromEvent(e);
       if(b == null) return;
-
-      // giảm giật: chỉ apply khi lệch > 1.5 độ
       if(lastBearingApplied == null || Math.abs(b - lastBearingApplied) > 1.5){
         lastBearingApplied = b;
         map.setBearing(b);
@@ -978,7 +1031,6 @@
 
     async function enableCompass(){
       try{
-        // iOS cần xin permission
         if(typeof DeviceOrientationEvent !== "undefined" &&
            typeof DeviceOrientationEvent.requestPermission === "function"){
           const p = await DeviceOrientationEvent.requestPermission();
@@ -1150,7 +1202,6 @@
         if(document.visibilityState === "visible") return;
 
         new Notification(title || "Tin nhắn mới", { body: body || "", icon: icon || safeAva("") });
-        // rung nhẹ (nếu có)
         if(navigator.vibrate) navigator.vibrate([80, 40, 80]);
       }catch{}
     }
@@ -1413,7 +1464,7 @@
       }
     }
 
-    // ===== Inbox listener (badge + notify) =====
+    // ===== Inbox listener =====
     let unsubInbox = null;
     const inboxState = new Map();
     const prevInboxUnread = new Map();
@@ -1635,11 +1686,11 @@
     }
 
     // ===== Chat (RTDB) =====
-    let currentChatType = null;        // "dm" | "group"
-    let currentChatId = null;          // dmId hoặc groupId
+    let currentChatType = null;
+    let currentChatId = null;
     let currentMsgsRef = null;
 
-    let currentPeerUid = null;         // dm only
+    let currentPeerUid = null;
     let lastOutgoingKey = null;
 
     const chatBackdrop=$("chatBackdrop");
