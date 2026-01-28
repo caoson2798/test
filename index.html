@@ -18,8 +18,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- ✅ MapLibre GL (xoay bản đồ + label quay theo) -->
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
   <style>
     :root{
@@ -152,6 +153,7 @@
       left:16px;
       z-index:999;
       display:flex;gap:10px;
+      flex-wrap:wrap;
     }
 
     .glass-card{
@@ -230,16 +232,18 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(calc(var(--safe-t) + 10px));}
 
-    .avatar-marker{background:transparent;border:none;}
-    .avatar-wrap{
+    /* ✅ marker avatar */
+    .avatar-marker{
       width:44px;height:44px;border-radius:50%;
-      overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,0.22);
-      position:relative;
+      overflow:hidden;
+      box-shadow:0 8px 18px rgba(0,0,0,0.22);
+      background:transparent;
+      display:block;
     }
-    .avatar-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
-    .ring-me{border:3px solid #ef4444;}
-    .ring-friend{border:3px solid #2563eb;}
-    .ring-off{border:3px solid #94a3b8;opacity:.85;}
+    .avatar-marker img{width:100%;height:100%;object-fit:cover;display:block;}
+    .ring-me{outline:3px solid #ef4444;}
+    .ring-friend{outline:3px solid #2563eb;}
+    .ring-off{outline:3px solid #94a3b8;opacity:.85;}
 
     .modal-backdrop{
       position:fixed;inset:0;
@@ -290,44 +294,19 @@
     .msg-row{display:flex;margin:6px 0;}
     .msg-row.me{justify-content:flex-end;}
     .msg-row.other{justify-content:flex-start;}
-
-    .msg-wrap{
-      display:flex;
-      flex-direction:column;
-      width:fit-content;
-      max-width:78%;
-    }
+    .msg-wrap{display:flex;flex-direction:column;width:fit-content;max-width:78%;}
     .msg-row.me .msg-wrap{align-items:flex-end;}
     .msg-row.other .msg-wrap{align-items:flex-start;}
-
     .bubble{
-      display:inline-block;
-      width:fit-content;
-      max-width:100%;
-      min-width:44px;
-      padding:10px 12px;
-      border-radius:16px;
-      font-size:14px;
-      line-height:1.35;
+      display:inline-block;width:fit-content;max-width:100%;min-width:44px;
+      padding:10px 12px;border-radius:16px;font-size:14px;line-height:1.35;
       box-shadow:0 6px 16px rgba(0,0,0,0.06);
       border:1px solid rgba(0,0,0,0.04);
-      background:#fff;
-      white-space:normal;
-      overflow-wrap:anywhere;
-      word-break:normal;
+      background:#fff;white-space:normal;overflow-wrap:anywhere;
     }
-    .msg-row.me .bubble{
-      background:#dbeafe;
-      border-color:rgba(37,99,235,0.18);
-    }
-
+    .msg-row.me .bubble{background:#dbeafe;border-color:rgba(37,99,235,0.18);}
     .msg-time{font-size:10px;color:#64748b;margin-top:4px;text-align:right;}
-    .seen-line{
-      padding:0 12px 10px;
-      font-size:11px;
-      color:#64748b;
-      min-height:18px;
-    }
+    .seen-line{padding:0 12px 10px;font-size:11px;color:#64748b;min-height:18px;}
 
     .chat-foot{
       padding:10px;display:flex;gap:8px;
@@ -371,7 +350,6 @@
     .gab-left{font-size:13px;color:#0f172a;}
     .gab-left b{font-size:16px;}
 
-    /* ✅ Badge đỏ kiểu Messenger */
     .icon-btnwrap{position:relative;display:inline-flex;}
     .badge{
       position:absolute;
@@ -388,7 +366,6 @@
       box-shadow:0 6px 18px rgba(239,68,68,0.25);
     }
 
-    /* ✅ Loading screen */
     .loading-screen{
       height:100%;
       display:flex;flex-direction:column;
@@ -405,13 +382,24 @@
       margin:14px auto 10px;
     }
     @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* ✅ MapLibre popup fix (đẹp hơn chút) */
+    .maplibregl-popup-content{
+      border-radius:16px !important;
+      box-shadow:0 15px 40px rgba(0,0,0,0.18) !important;
+      padding:12px !important;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif !important;
+    }
+    .maplibregl-ctrl-group{
+      border-radius:14px !important;
+      overflow:hidden;
+    }
   </style>
 </head>
 
 <body>
   <div id="toast" class="toast">Thông báo</div>
 
-  <!-- ✅ Loading (mặc định mở lên luôn show) -->
   <section id="loadingScreen" class="loading-screen">
     <div class="login-card">
       <div class="app-logo">🗺️</div>
@@ -445,9 +433,13 @@
     <div class="content-area">
       <div id="viewMap" class="view-container">
         <div id="map"></div>
+
         <div class="locate-btn" id="btnLocateMe" title="Tìm lại vị trí">🎯</div>
+
         <div class="route-btn">
           <button id="btnClearRoute" class="btn secondary" style="padding:10px 12px;border-radius:14px;">🧹 Xóa đường</button>
+          <button id="btnToggleCompass" class="btn secondary" style="padding:10px 12px;border-radius:14px;">🧭 Xoay theo la bàn</button>
+          <button id="btnResetBearing" class="btn secondary" style="padding:10px 12px;border-radius:14px;">🧷 Reset hướng</button>
         </div>
       </div>
 
@@ -459,7 +451,6 @@
           <p class="login-sub" style="margin:8px 0 0;font-size:11px;">Họ phải đăng nhập app này ít nhất 1 lần rồi mới kết bạn được.</p>
         </div>
 
-        <!-- ✅ chỉ giữ tick chọn -->
         <div class="glass-card">
           <div class="card-head">✅ Tạo nhóm chat (tick chọn bạn)</div>
           <p class="login-sub" style="margin:0;font-size:12px;">
@@ -515,7 +506,7 @@
         <button id="btnLogout" class="btn danger" style="width:100%;justify-content:center;">Đăng xuất</button>
 
         <div style="text-align:center;margin-top:30px;font-size:11px;color:var(--text-muted);">
-          Friends Map v3.5 - Inbox Badge + Notifications
+          Friends Map v3.6 - Compass Rotate + Notifications
         </div>
       </div>
     </div>
@@ -607,7 +598,7 @@
       getDatabase, ref, push, set, update, onDisconnect, onValue, off,
       query as rQuery, limitToLast,
       serverTimestamp as rtdbServerTimestamp,
-      runTransaction
+      runTransaction, onChildAdded, onChildChanged
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
     // ===== Firebase Config =====
@@ -642,7 +633,7 @@
     // ===== RTDB Paths =====
     const liveLocPath = (uid) => `liveLocations/${uid}`;
     const statusPath  = (uid) => `status/${uid}`;
-    const inboxPath   = (uid) => `inbox/${uid}`; // ✅ unread badge & last message info
+    const inboxPath   = (uid) => `inbox/${uid}`;
 
     const inboxKeyDM = (dmId)=> `dm_${dmId}`;
     const inboxKeyGroup = (gid)=> `group_${gid}`;
@@ -663,8 +654,8 @@
       if(name==="friends") topTitle.textContent="Bạn bè";
       if(name==="profile") topTitle.textContent="Cá nhân";
 
-      if(name==="map" && window.__leafletMap){
-        setTimeout(()=>window.__leafletMap.invalidateSize(), 200);
+      if(name==="map" && window.__maplibre){
+        setTimeout(()=>window.__maplibre.resize(), 200);
       }
     }
     tabs.map.onclick=()=>setTab("map");
@@ -672,46 +663,57 @@
     tabs.profile.onclick=()=>setTab("profile");
     $("btnGoProfile").onclick=()=>setTab("profile");
 
-    // ===== Map (chỉ OSM) =====
-    const map = L.map("map", { zoomControl:false }).setView([21.0278,105.8342], 13);
-    window.__leafletMap = map;
+    // ===== Map (MapLibre) =====
+    const map = new maplibregl.Map({
+      container: "map",
+      style: "https://demotiles.maplibre.org/style.json",
+      center: [105.8342, 21.0278],
+      zoom: 13,
+      bearing: 0,
+      pitch: 0,
+      dragRotate: true,
+      touchZoomRotate: true
+    });
+    window.__maplibre = map;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, attribution: "© OpenStreetMap"
-    }).addTo(map);
+    map.addControl(new maplibregl.NavigationControl({ showCompass:true, showZoom:true }), "bottom-right");
+    map.addControl(new maplibregl.AttributionControl({ compact:true }), "top-left");
+
+    // route layer init
+    map.on("load", ()=>{
+      map.addSource("route", {
+        type: "geojson",
+        data: { type:"FeatureCollection", features: [] }
+      });
+      map.addLayer({
+        id: "route-line",
+        type: "line",
+        source: "route",
+        layout: { "line-join":"round", "line-cap":"round" },
+        paint: { "line-width": 5, "line-opacity": 0.9 }
+      });
+    });
 
     let me = null;
-    let myMarker = null;
-    const friendMarkers = new Map();
+    let sharing=false;
+
+    // markers
+    let myMarker = null; // maplibre Marker
+    const friendMarkers = new Map(); // uid -> Marker
     const friendLocs = new Map();
     const userCache = new Map();
-    const friendPresence = new Map(); // uid -> {state,lastChanged}
-    const friendRowRefs = new Map();  // uid -> {statusEl,badgeEl,chatBtnWrap}
-    const groupRowRefs  = new Map();  // gid -> {badgeEl}
+    const friendPresence = new Map();
+    const friendRowRefs = new Map();
+    const groupRowRefs  = new Map();
 
-    let routeLayer = null;
+    // routing
     let routingToUid = null;
 
-    function makeAvatarIcon(photoURL, isMe, isSharing=true){
-      const ring = isSharing ? (isMe ? "ring-me" : "ring-friend") : "ring-off";
-      return L.divIcon({
-        className:"avatar-marker",
-        html:`<div class="avatar-wrap ${ring}"><img src="${safeAva(photoURL)}" alt=""></div>`,
-        iconSize:[44,44],
-        iconAnchor:[22,44],
-        popupAnchor:[0,-40]
-      });
-    }
-
-    function upsertMyMarker(lat,lng){
-      const pos=[lat,lng];
-      const icon = makeAvatarIcon(me?.photoURL, true, true);
-      if(!myMarker){
-        myMarker = L.marker(pos,{icon}).addTo(map).bindPopup("<b>📍 Bạn đang ở đây</b>");
-      }else{
-        myMarker.setLatLng(pos);
-        myMarker.setIcon(icon);
-      }
+    function makeMarkerEl(photoURL, ringClass){
+      const el = document.createElement("div");
+      el.className = `avatar-marker ${ringClass || ""}`;
+      el.innerHTML = `<img src="${safeAva(photoURL)}" alt="">`;
+      return el;
     }
 
     function friendPopupHtml(fid){
@@ -738,31 +740,9 @@
       `;
     }
 
-    function upsertFriendMarker(uid,lat,lng,isSharing){
-      const pos=[lat,lng];
-      const u = userCache.get(uid) || {};
-      const icon = makeAvatarIcon(u.photoURL, false, !!isSharing);
-
-      const existing = friendMarkers.get(uid);
-      if(!existing){
-        const m = L.marker(pos,{icon}).addTo(map).bindPopup(friendPopupHtml(uid));
-        friendMarkers.set(uid,m);
-      }else{
-        existing.setLatLng(pos);
-        existing.setIcon(icon);
-        existing.setPopupContent(friendPopupHtml(uid));
-      }
-    }
-
-    function removeFriendMarker(uid){
-      const m = friendMarkers.get(uid);
-      if(m){ map.removeLayer(m); friendMarkers.delete(uid); }
-    }
-
-    map.on("popupopen", (e)=>{
-      const root = e.popup.getElement();
-      if(!root) return;
-      root.querySelectorAll("button[data-action]").forEach(btn=>{
+    function attachPopupButtonHandlers(popupEl){
+      if(!popupEl) return;
+      popupEl.querySelectorAll("button[data-action]").forEach(btn=>{
         btn.onclick=()=>{
           const uid = btn.getAttribute("data-uid");
           const action = btn.getAttribute("data-action");
@@ -771,7 +751,59 @@
           if(action==="route") startRoutingTo(uid);
         };
       });
-    });
+    }
+
+    function upsertMyMarker(lat,lng){
+      const pos=[lng,lat];
+      const el = makeMarkerEl(me?.photoURL, "ring-me");
+      if(!myMarker){
+        const pop = new maplibregl.Popup({ offset: 28 }).setHTML("<b>📍 Bạn đang ở đây</b>");
+        pop.on("open", ()=> attachPopupButtonHandlers(pop.getElement()));
+        myMarker = new maplibregl.Marker({ element: el, anchor:"bottom" })
+          .setLngLat(pos)
+          .setPopup(pop)
+          .addTo(map);
+      }else{
+        myMarker.setLngLat(pos);
+        myMarker.getElement().className = "avatar-marker ring-me";
+        myMarker.getElement().querySelector("img").src = safeAva(me?.photoURL);
+      }
+    }
+
+    function upsertFriendMarker(uid, lat, lng, isSharing){
+      const pos=[lng,lat];
+      const u = userCache.get(uid) || {};
+      const ring = isSharing ? "ring-friend" : "ring-off";
+      const el = makeMarkerEl(u.photoURL, ring);
+
+      const existing = friendMarkers.get(uid);
+      if(!existing){
+        const pop = new maplibregl.Popup({ offset: 28 }).setHTML(friendPopupHtml(uid));
+        pop.on("open", ()=> attachPopupButtonHandlers(pop.getElement()));
+
+        const m = new maplibregl.Marker({ element: el, anchor:"bottom" })
+          .setLngLat(pos)
+          .setPopup(pop)
+          .addTo(map);
+
+        friendMarkers.set(uid, m);
+      }else{
+        existing.setLngLat(pos);
+        existing.getElement().className = `avatar-marker ${ring}`;
+        const img = existing.getElement().querySelector("img");
+        if(img) img.src = safeAva(u.photoURL);
+
+        const pop = existing.getPopup();
+        if(pop){
+          pop.setHTML(friendPopupHtml(uid));
+        }
+      }
+    }
+
+    function removeFriendMarker(uid){
+      const m = friendMarkers.get(uid);
+      if(m){ m.remove(); friendMarkers.delete(uid); }
+    }
 
     // ===== Geo =====
     let watchId=null;
@@ -784,7 +816,7 @@
         (pos)=>{
           updateMyPos(pos);
           if(manual){
-            map.setView([pos.coords.latitude,pos.coords.longitude],16);
+            map.easeTo({ center:[pos.coords.longitude,pos.coords.latitude], zoom:16, duration:500 });
             toast("Đã cập nhật vị trí!");
           }
         },
@@ -839,7 +871,7 @@
         (pos)=>{
           updateMyPos(pos);
           if(!window.__centered){
-            map.setView([pos.coords.latitude,pos.coords.longitude],15);
+            map.easeTo({ center:[pos.coords.longitude,pos.coords.latitude], zoom:15, duration:600 });
             window.__centered=true;
           }
         },
@@ -854,10 +886,12 @@
 
     $("btnLocateMe").onclick=()=>requestLocation(true);
 
-    // ===== Routing (OSRM) =====
+    // ===== Routing (OSRM -> geojson line) =====
     function clearRoute(){
       routingToUid=null;
-      if(routeLayer){ map.removeLayer(routeLayer); routeLayer=null; }
+      if(map.getSource("route")){
+        map.getSource("route").setData({ type:"FeatureCollection", features: [] });
+      }
       toast("Đã xóa đường đi");
     }
     $("btnClearRoute").onclick=()=>clearRoute();
@@ -866,6 +900,18 @@
       routingToUid = fid;
       setTab("map");
       await drawRouteTo(fid, true);
+    }
+
+    function computeBounds(coordsLngLat){
+      let minLng=Infinity, minLat=Infinity, maxLng=-Infinity, maxLat=-Infinity;
+      for(const c of coordsLngLat){
+        const lng=c[0], lat=c[1];
+        if(lng<minLng) minLng=lng;
+        if(lat<minLat) minLat=lat;
+        if(lng>maxLng) maxLng=lng;
+        if(lat>maxLat) maxLat=lat;
+      }
+      return [[minLng,minLat],[maxLng,maxLat]];
     }
 
     async function drawRouteTo(fid, fit=false){
@@ -881,12 +927,16 @@
         const data = await res.json();
         if(!data.routes || !data.routes[0]) return toast("Không lấy được đường đi");
 
-        const coords = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-        if(routeLayer) map.removeLayer(routeLayer);
-        routeLayer = L.polyline(coords).addTo(map);
+        const geo = data.routes[0].geometry; // geojson line with [lng,lat]
+        const feature = { type:"Feature", geometry: geo, properties:{} };
+
+        if(map.getSource("route")){
+          map.getSource("route").setData({ type:"FeatureCollection", features:[feature] });
+        }
 
         if(fit){
-          map.fitBounds(routeLayer.getBounds(), { padding:[40,40] });
+          const bounds = computeBounds(geo.coordinates);
+          map.fitBounds(bounds, { padding: 40, duration: 600 });
         }
 
         const km = ((data.routes[0].distance||0)/1000).toFixed(1);
@@ -896,6 +946,79 @@
         toast("Lỗi chỉ đường: " + (e.message||"unknown"));
       }
     }
+
+    // ===== Compass rotate (xoay theo la bàn) =====
+    let compassOn = false;
+    let lastBearingApplied = null;
+
+    function getBearingFromEvent(e){
+      // iOS Safari
+      if(typeof e.webkitCompassHeading === "number"){
+        return e.webkitCompassHeading; // 0..360, 0 = North
+      }
+      // Android/others: alpha = rotation around z-axis (0..360)
+      if(typeof e.alpha === "number"){
+        // thường alpha tăng theo chiều kim đồng hồ, map bearing cũng vậy
+        return e.alpha;
+      }
+      return null;
+    }
+
+    function onDeviceOrientation(e){
+      if(!compassOn) return;
+      const b = getBearingFromEvent(e);
+      if(b == null) return;
+
+      // giảm giật: chỉ apply khi lệch > 1.5 độ
+      if(lastBearingApplied == null || Math.abs(b - lastBearingApplied) > 1.5){
+        lastBearingApplied = b;
+        map.setBearing(b);
+      }
+    }
+
+    async function enableCompass(){
+      try{
+        // iOS cần xin permission
+        if(typeof DeviceOrientationEvent !== "undefined" &&
+           typeof DeviceOrientationEvent.requestPermission === "function"){
+          const p = await DeviceOrientationEvent.requestPermission();
+          if(p !== "granted"){
+            toast("Bạn chưa cấp quyền la bàn");
+            return false;
+          }
+        }
+        window.addEventListener("deviceorientation", onDeviceOrientation, true);
+        compassOn = true;
+        lastBearingApplied = null;
+        $("btnToggleCompass").textContent = "🧭 Đang xoay";
+        $("btnToggleCompass").className = "btn success";
+        toast("✅ Bật xoay theo la bàn");
+        return true;
+      }catch(err){
+        console.error(err);
+        toast("Không bật được la bàn");
+        return false;
+      }
+    }
+
+    function disableCompass(){
+      compassOn = false;
+      window.removeEventListener("deviceorientation", onDeviceOrientation, true);
+      $("btnToggleCompass").textContent = "🧭 Xoay theo la bàn";
+      $("btnToggleCompass").className = "btn secondary";
+      toast("Đã tắt xoay theo la bàn");
+    }
+
+    $("btnToggleCompass").onclick = async ()=>{
+      if(compassOn) disableCompass();
+      else await enableCompass();
+    };
+
+    $("btnResetBearing").onclick = ()=>{
+      disableCompass();
+      map.setBearing(0);
+      toast("Đã reset hướng bản đồ");
+    };
 
     // ===== Firestore Helpers =====
     async function ensureUserDoc(user){
@@ -956,8 +1079,6 @@
     }
 
     // ===== Sharing =====
-    let sharing=false;
-
     async function setSharingUI(on){
       sharing=!!on;
       const btn=$("btnToggleShare");
@@ -968,7 +1089,6 @@
         label.textContent="🟢 Đang chia sẻ.";
         if(lastPos) await pushLiveLocation(true);
 
-        // ✅ nếu mất mạng/đóng app -> set sharing false
         const myLiveRef = ref(rtdb, liveLocPath(me.uid));
         await onDisconnect(myLiveRef).set({
           sharing:false,
@@ -983,7 +1103,6 @@
         await pushShareOff();
       }
 
-      // backup Firestore locations
       if (me) {
         const payload = { sharing, updatedAt: serverTimestamp() };
         if (sharing && lastPos) { payload.lat = lastPos.lat; payload.lng = lastPos.lng; }
@@ -1005,7 +1124,7 @@
       }
       if(p === "granted"){
         btn.textContent="Đã bật"; btn.className="btn success";
-        desc.textContent="✅ Đã cấp quyền. Khi có tin nhắn mới sẽ hiện thông báo (khi app đang chạy/ẩn tab).";
+        desc.textContent="✅ Khi có tin nhắn mới sẽ hiện thông báo (khi app đang chạy/ẩn tab).";
       }else if(p === "denied"){
         btn.textContent="Bị chặn"; btn.className="btn danger";
         desc.textContent="❌ Bạn đã chặn. Vào cài đặt trình duyệt để bật lại.";
@@ -1028,8 +1147,11 @@
       try{
         if(!Notification) return;
         if(Notification.permission !== "granted") return;
-        if(document.visibilityState === "visible") return; // đang mở app thì thôi (đỡ spam)
+        if(document.visibilityState === "visible") return;
+
         new Notification(title || "Tin nhắn mới", { body: body || "", icon: icon || safeAva("") });
+        // rung nhẹ (nếu có)
+        if(navigator.vibrate) navigator.vibrate([80, 40, 80]);
       }catch{}
     }
 
@@ -1119,7 +1241,6 @@
           friendPresence.set(fid, snap.val() || {});
         }
 
-        // ✅ update UI row if exists
         const row = friendRowRefs.get(fid);
         if(row?.statusEl){
           const pr = friendPresence.get(fid);
@@ -1127,9 +1248,10 @@
           row.statusEl.textContent = isOn ? "🟢 Online" : "⚪ Offline";
         }
 
-        // refresh popup
         const mk = friendMarkers.get(fid);
-        if(mk) mk.setPopupContent(friendPopupHtml(fid));
+        if(mk && mk.getPopup()){
+          mk.getPopup().setHTML(friendPopupHtml(fid));
+        }
       };
       onValue(stRef, handler, (err)=>console.error("presence listener err:", err));
       unsubStatus.set(fid, ()=> off(stRef, "value", handler));
@@ -1251,7 +1373,7 @@
 
     // ===== Groups (Firestore) =====
     let unsubGroups = null;
-    const groupCache = new Map(); // gid -> {name, members}
+    const groupCache = new Map();
 
     $("btnCreateGroupFromSelected").onclick = async ()=>{
       try{
@@ -1293,8 +1415,8 @@
 
     // ===== Inbox listener (badge + notify) =====
     let unsubInbox = null;
-    const inboxState = new Map(); // key -> entry
-    const prevInboxUnread = new Map(); // key -> unread
+    const inboxState = new Map();
+    const prevInboxUnread = new Map();
 
     function listenInbox(){
       if(unsubInbox) { try{unsubInbox();}catch{} }
@@ -1304,7 +1426,6 @@
       const inRef = ref(rtdb, inboxPath(me.uid));
       const handler = (snap)=>{
         const data = snap.val() || {};
-        // rebuild map
         for(const k of Object.keys(data)){
           const entry = data[k] || {};
           inboxState.set(k, entry);
@@ -1312,18 +1433,15 @@
           const oldUnread = prevInboxUnread.get(k) || 0;
           const newUnread = Number(entry.unread||0);
 
-          // update friend badges
           if(entry.type === "dm" && entry.peerUid){
             const row = friendRowRefs.get(entry.peerUid);
             if(row?.badgeEl) setBadge(row.badgeEl, newUnread);
           }
-          // update group badges
           if(entry.type === "group" && entry.groupId){
             const row = groupRowRefs.get(entry.groupId);
             if(row?.badgeEl) setBadge(row.badgeEl, newUnread);
           }
 
-          // notify if new unread increased (from others)
           if(newUnread > oldUnread && entry.lastFrom && entry.lastFrom !== me.uid){
             const title = entry.title || "Tin nhắn mới";
             const body  = entry.lastText || "";
@@ -1334,7 +1452,6 @@
           prevInboxUnread.set(k, newUnread);
         }
 
-        // also clear badges for removed keys
         for(const k of Array.from(prevInboxUnread.keys())){
           if(!(k in data)){
             prevInboxUnread.delete(k);
@@ -1405,7 +1522,6 @@
             const div = document.createElement("div");
             div.className = "list-item";
 
-            // chat button + badge
             const dmId = friendDocId(me.uid, fid);
             const key = inboxKeyDM(dmId);
             const unread = Number(inboxState.get(key)?.unread || 0);
@@ -1436,7 +1552,6 @@
             const badgeEl  = div.querySelector(".badge");
             friendRowRefs.set(fid, { statusEl, badgeEl });
 
-            // set initial presence if already have
             const pr = friendPresence.get(fid);
             const isOn = pr?.state === "online";
             statusEl.textContent = isOn ? "🟢 Online" : "⚪ Offline";
@@ -1524,9 +1639,6 @@
     let currentChatId = null;          // dmId hoặc groupId
     let currentMsgsRef = null;
 
-    let currentAddedHandler = null;
-    let currentChangedHandler = null;
-
     let currentPeerUid = null;         // dm only
     let lastOutgoingKey = null;
 
@@ -1604,13 +1716,11 @@
         const p = chatPath();
         if(!p) return;
 
-        // mark read in message
         await update(ref(rtdb, `${p}/${snapKey}`),{
           [`readBy/${me.uid}`]: true,
           [`readAt/${me.uid}`]: Date.now()
         });
 
-        // clear unread in inbox for this chat
         const k = chatInboxKey();
         if(k){
           await update(ref(rtdb, `${inboxPath(me.uid)}/${k}`), { unread: 0, readAt: Date.now() });
@@ -1620,16 +1730,19 @@
       }
     }
 
+    let unsubChatAdded=null;
+    let unsubChatChanged=null;
+
     function attachChatListeners(){
       const p = chatPath();
       if(!p) return;
 
-      if(currentMsgsRef && currentAddedHandler) off(currentMsgsRef, "child_added", currentAddedHandler);
-      if(currentMsgsRef && currentChangedHandler) off(currentMsgsRef, "child_changed", currentChangedHandler);
+      if(unsubChatAdded){ try{unsubChatAdded();}catch{} }
+      if(unsubChatChanged){ try{unsubChatChanged();}catch{} }
 
       currentMsgsRef = rQuery(ref(rtdb, p), limitToLast(160));
 
-      currentAddedHandler = async (snap)=>{
+      const addedHandler = async (snap)=>{
         const m = snap.val();
         if(!m) return;
 
@@ -1643,7 +1756,7 @@
         }
       };
 
-      currentChangedHandler = (snap)=>{
+      const changedHandler = (snap)=>{
         const m = snap.val();
         if(!m) return;
         if(m.from === me.uid){
@@ -1651,12 +1764,11 @@
         }
       };
 
-      onValue(currentMsgsRef, ()=>{}, ()=>{}); // giữ ref "sống"
-      // child events:
-      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js").then(mod=>{
-        mod.onChildAdded(currentMsgsRef, currentAddedHandler);
-        mod.onChildChanged(currentMsgsRef, currentChangedHandler);
-      });
+      onChildAdded(currentMsgsRef, addedHandler);
+      onChildChanged(currentMsgsRef, changedHandler);
+
+      unsubChatAdded = ()=> off(currentMsgsRef, "child_added", addedHandler);
+      unsubChatChanged = ()=> off(currentMsgsRef, "child_changed", changedHandler);
     }
 
     function openChatUI({title, sub, ava, typeChip, showRouteBtn}){
@@ -1697,9 +1809,7 @@
 
       $("btnChatRoute").onclick = ()=> startRoutingTo(uid);
 
-      // ✅ clear badge
       await clearInboxUnreadForDM(uid);
-
       attachChatListeners();
     }
 
@@ -1719,37 +1829,20 @@
         showRouteBtn: false
       });
 
-      // ✅ clear badge
       await clearInboxUnreadForGroup(groupId);
-
       attachChatListeners();
     }
 
     function closeChat(){
       chatBackdrop.classList.remove("show");
-
-      // detach
-      try{
-        if(currentMsgsRef && currentAddedHandler){
-          import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js").then(mod=>{
-            mod.off(currentMsgsRef, "child_added", currentAddedHandler);
-          });
-        }
-        if(currentMsgsRef && currentChangedHandler){
-          import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js").then(mod=>{
-            mod.off(currentMsgsRef, "child_changed", currentChangedHandler);
-          });
-        }
-      }catch{}
+      if(unsubChatAdded){ try{unsubChatAdded();}catch{} unsubChatAdded=null; }
+      if(unsubChatChanged){ try{unsubChatChanged();}catch{} unsubChatChanged=null; }
 
       currentChatType = null;
       currentChatId = null;
       currentPeerUid = null;
 
       currentMsgsRef = null;
-      currentAddedHandler = null;
-      currentChangedHandler = null;
-
       lastOutgoingKey = null;
       seenLine.textContent = "";
     }
@@ -1757,9 +1850,7 @@
     $("btnChatClose").onclick = closeChat;
     chatBackdrop.onclick = (e)=>{ if(e.target===chatBackdrop) closeChat(); };
 
-    // ===== Inbox update helpers (badge + last message) =====
     async function upsertInboxForMe(key, payload){
-      // update sender inbox (unread 0)
       await update(ref(rtdb, `${inboxPath(me.uid)}/${key}`), {
         ...payload,
         unread: 0,
@@ -1770,7 +1861,6 @@
 
     async function incInboxForUser(uid, key, payload){
       const baseRef = ref(rtdb, `${inboxPath(uid)}/${key}`);
-      // merge payload + unread++
       await update(baseRef, { ...payload, updatedAt: Date.now() });
       await runTransaction(ref(rtdb, `${inboxPath(uid)}/${key}/unread`), (cur)=>{
         const v = Number(cur||0);
@@ -1805,7 +1895,6 @@
         };
         await set(msgRef, payload);
 
-        // update meta (optional)
         await update(ref(rtdb, metaP), {
           lastText: text,
           lastFrom: me.uid,
@@ -1816,7 +1905,6 @@
         lastOutgoingKey = msgRef.key;
         seenLine.textContent = "";
 
-        // ✅ update inbox (badge) like messenger
         if(currentChatType === "dm"){
           const peerUid = currentPeerUid;
           const dmId = currentChatId;
@@ -1829,7 +1917,6 @@
           const peerTitleForMe = u.displayName || "Bạn bè";
           const peerPhotoForMe = u.photoURL || "";
 
-          // sender inbox (me)
           await upsertInboxForMe(key, {
             type:"dm",
             chatId: dmId,
@@ -1842,7 +1929,6 @@
             lastTs: now
           });
 
-          // receiver inbox (peer) => unread++
           await incInboxForUser(peerUid, key, {
             type:"dm",
             chatId: dmId,
@@ -1862,7 +1948,6 @@
           const members = Object.keys(g.members || {});
           const groupTitle = g.name || "Nhóm chat";
 
-          // sender inbox (me) unread 0
           await upsertInboxForMe(key, {
             type:"group",
             groupId: gid,
@@ -1874,7 +1959,6 @@
             lastTs: now
           });
 
-          // each member (except sender) unread++
           for(const uid of members){
             if(uid === me.uid) continue;
             await incInboxForUser(uid, key, {
@@ -1927,7 +2011,6 @@
     onAuthStateChanged(auth, async (user)=>{
       me=user;
 
-      // first resolve -> stop loading
       if(!authResolved){
         authResolved = true;
       }
@@ -1937,8 +2020,9 @@
         stopGeolocationWatch();
         detachAllFriendLocListeners();
         closeChat();
+        disableCompass();
         if(unsubInbox){ try{unsubInbox();}catch{} unsubInbox=null; }
-        if(myMarker){ map.removeLayer(myMarker); myMarker=null; }
+        if(myMarker){ myMarker.remove(); myMarker=null; }
         selectedFriends.clear();
         updateGroupBarUI();
         refreshNotiUI();
@@ -1958,17 +2042,12 @@
       await ensureUserDoc(me);
       await ensurePublicEmailIndex(me);
 
-      // presence + lifecycle
       await startPresence();
       bindLifecycleHooks();
 
-      // inbox
       listenInbox();
-
-      // location
       startGeolocationWatch();
 
-      // load share state (backup)
       const loc = await getDoc(doc(db,"locations",me.uid));
       if(loc.exists()) await setSharingUI(!!loc.data().sharing);
       else await setSharingUI(false);
@@ -1983,8 +2062,5 @@
       toast("Chào " + (me.displayName || "bạn"));
     });
   </script>
-
-  <!-- ✅ QUICK NOTE: nếu group create bị "Missing or insufficient permissions"
-       -> cần sửa Firestore rules. -->
 </body>
 </html>
