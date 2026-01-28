@@ -72,26 +72,6 @@
     }
     .inp:focus{border-color:var(--primary);background:#fff;}
 
-    /* ===== Loading ===== */
-    .loading-screen{
-      height:100%;
-      display:flex;flex-direction:column;
-      align-items:center;justify-content:center;
-      padding:20px;text-align:center;
-      background:linear-gradient(135deg,#e0f2fe 0%,#f0f9ff 100%);
-    }
-    .spinner{
-      width:44px;height:44px;border-radius:999px;
-      border:4px solid rgba(37,99,235,0.20);
-      border-top-color: rgba(37,99,235,1);
-      animation:spin 0.9s linear infinite;
-      margin-bottom:14px;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-title{font-size:16px;font-weight:800;margin:0 0 6px;}
-    .loading-sub{font-size:13px;color:var(--text-muted);margin:0;}
-
-    /* ===== Login ===== */
     .login-screen{
       height:100%;
       display:flex;flex-direction:column;
@@ -120,7 +100,6 @@
     .login-title{font-size:22px;font-weight:800;margin:0 0 8px;}
     .login-sub{font-size:14px;color:var(--text-muted);margin-bottom:24px;line-height:1.5;}
 
-    /* ===== App ===== */
     .app-screen{display:flex;flex-direction:column;height:100%;position:relative;}
 
     .topbar{
@@ -251,7 +230,6 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(calc(var(--safe-t) + 10px));}
 
-    /* Markers */
     .avatar-marker{background:transparent;border:none;}
     .avatar-wrap{
       width:44px;height:44px;border-radius:50%;
@@ -263,7 +241,6 @@
     .ring-friend{border:3px solid #2563eb;}
     .ring-off{border:3px solid #94a3b8;opacity:.85;}
 
-    /* Modals */
     .modal-backdrop{
       position:fixed;inset:0;
       background:rgba(15,23,42,0.35);
@@ -393,20 +370,57 @@
     }
     .gab-left{font-size:13px;color:#0f172a;}
     .gab-left b{font-size:16px;}
+
+    /* ✅ Badge đỏ kiểu Messenger */
+    .icon-btnwrap{position:relative;display:inline-flex;}
+    .badge{
+      position:absolute;
+      top:-7px; right:-7px;
+      background:#ef4444;
+      color:#fff;
+      border-radius:999px;
+      padding:2px 6px;
+      font-size:10px;
+      font-weight:900;
+      min-width:18px;
+      text-align:center;
+      border:2px solid rgba(255,255,255,0.95);
+      box-shadow:0 6px 18px rgba(239,68,68,0.25);
+    }
+
+    /* ✅ Loading screen */
+    .loading-screen{
+      height:100%;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:20px;text-align:center;
+      background:linear-gradient(135deg,#e0f2fe 0%,#f0f9ff 100%);
+    }
+    .spinner{
+      width:42px;height:42px;
+      border-radius:50%;
+      border:4px solid rgba(37,99,235,0.18);
+      border-top-color: rgba(37,99,235,1);
+      animation:spin 0.9s linear infinite;
+      margin:14px auto 10px;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
   </style>
 </head>
 
 <body>
   <div id="toast" class="toast">Thông báo</div>
 
-  <!-- 4) LOADING khi đang xác nhận đăng nhập -->
+  <!-- ✅ Loading (mặc định mở lên luôn show) -->
   <section id="loadingScreen" class="loading-screen">
-    <div class="spinner"></div>
-    <p class="loading-title">Đang kiểm tra đăng nhập…</p>
-    <p class="loading-sub">Vui lòng chờ một chút</p>
+    <div class="login-card">
+      <div class="app-logo">🗺️</div>
+      <div class="spinner"></div>
+      <h1 class="login-title" style="margin-top:8px;">Đang tải...</h1>
+      <p class="login-sub" style="margin-bottom:0;">Đang xác nhận đăng nhập</p>
+    </div>
   </section>
 
-  <!-- Login: mặc định ẩn, chỉ hiện sau khi auth check xong và chưa đăng nhập -->
   <section id="loginScreen" class="login-screen hidden">
     <div class="login-card">
       <div class="app-logo">🗺️</div>
@@ -414,7 +428,7 @@
       <p class="login-sub">Xem vị trí bạn bè thời gian thực.<br>Kết nối ngay, không lạc lối.</p>
       <button id="btnLogin" class="btn primary" style="width:100%;height:50px;">Đăng nhập với Google</button>
       <div style="margin-top:24px;font-size:12px;color:var(--text-muted);border-top:1px solid #e2e8f0;padding-top:16px;">
-        *Lưu ý: Dùng điện thoại sẽ định vị chuẩn hơn.
+        *Lưu ý: Nếu dùng máy tính bàn, vị trí có thể không chuẩn. Dùng điện thoại sẽ chuẩn hơn.
       </div>
     </div>
   </section>
@@ -445,7 +459,7 @@
           <p class="login-sub" style="margin:8px 0 0;font-size:11px;">Họ phải đăng nhập app này ít nhất 1 lần rồi mới kết bạn được.</p>
         </div>
 
-        <!-- 1) BỎ tạo nhóm thủ công (nhập email) => chỉ giữ tick -->
+        <!-- ✅ chỉ giữ tick chọn -->
         <div class="glass-card">
           <div class="card-head">✅ Tạo nhóm chat (tick chọn bạn)</div>
           <p class="login-sub" style="margin:0;font-size:12px;">
@@ -490,10 +504,18 @@
           <p id="shareDesc" class="login-sub">Khi bật, bạn bè sẽ thấy icon của bạn di chuyển trên bản đồ.</p>
         </div>
 
+        <div class="glass-card">
+          <div class="card-head">
+            <span>🔔 Thông báo tin nhắn</span>
+            <button id="btnToggleNoti" class="btn secondary" style="padding:6px 12px;font-size:12px;">Bật</button>
+          </div>
+          <p id="notiDesc" class="login-sub">Cấp quyền để nhận thông báo khi có tin nhắn mới.</p>
+        </div>
+
         <button id="btnLogout" class="btn danger" style="width:100%;justify-content:center;">Đăng xuất</button>
 
         <div style="text-align:center;margin-top:30px;font-size:11px;color:var(--text-muted);">
-          Friends Map v3.5 - Single Map + Tick Group + Better Auth Loading
+          Friends Map v3.5 - Inbox Badge + Notifications
         </div>
       </div>
     </div>
@@ -518,7 +540,7 @@
     </nav>
   </section>
 
-  <!-- Chat modal -->
+  <!-- ✅ Modal chat -->
   <div id="chatBackdrop" class="modal-backdrop">
     <div class="chat-modal">
       <div class="chat-head">
@@ -548,7 +570,7 @@
     </div>
   </div>
 
-  <!-- Group create modal (tick) -->
+  <!-- ✅ Modal tạo nhóm từ tick -->
   <div id="groupBackdrop" class="modal-backdrop">
     <div class="chat-modal" style="height:auto;max-height:78vh;">
       <div class="chat-head">
@@ -582,10 +604,10 @@
       collection, addDoc, query, where, onSnapshot, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import {
-      getDatabase, ref, push, set, update, onDisconnect, onValue,
-      onChildAdded, onChildChanged, off,
+      getDatabase, ref, push, set, update, onDisconnect, onValue, off,
       query as rQuery, limitToLast,
-      serverTimestamp as rtdbServerTimestamp
+      serverTimestamp as rtdbServerTimestamp,
+      runTransaction
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
     // ===== Firebase Config =====
@@ -614,13 +636,16 @@
       clearTimeout(window.__toastTimer);
       window.__toastTimer = setTimeout(()=>t.classList.remove("show"), 2500);
     };
-
     function safeAva(url){ return url || "https://www.gravatar.com/avatar/?d=mp&s=96"; }
     function friendDocId(a,b){ return (a<b)?`${a}_${b}`:`${b}_${a}`; }
 
     // ===== RTDB Paths =====
-    const liveLocPath = (uid) => `liveLocations/${uid}`; // realtime location
-    const statusPath  = (uid) => `status/${uid}`;        // presence online/offline
+    const liveLocPath = (uid) => `liveLocations/${uid}`;
+    const statusPath  = (uid) => `status/${uid}`;
+    const inboxPath   = (uid) => `inbox/${uid}`; // ✅ unread badge & last message info
+
+    const inboxKeyDM = (dmId)=> `dm_${dmId}`;
+    const inboxKeyGroup = (gid)=> `group_${gid}`;
 
     // ===== Tabs =====
     const views = { map: $("viewMap"), friends: $("viewFriends"), profile: $("viewProfile") };
@@ -647,14 +672,12 @@
     tabs.profile.onclick=()=>setTab("profile");
     $("btnGoProfile").onclick=()=>setTab("profile");
 
-    // ===== Map =====
-    // 2) BỎ nhiều chế độ bản đồ: chỉ dùng 1 lớp OSM
+    // ===== Map (chỉ OSM) =====
     const map = L.map("map", { zoomControl:false }).setView([21.0278,105.8342], 13);
     window.__leafletMap = map;
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: "© OpenStreetMap"
+      maxZoom: 19, attribution: "© OpenStreetMap"
     }).addTo(map);
 
     let me = null;
@@ -663,15 +686,13 @@
     const friendLocs = new Map();
     const userCache = new Map();
     const friendPresence = new Map(); // uid -> {state,lastChanged}
+    const friendRowRefs = new Map();  // uid -> {statusEl,badgeEl,chatBtnWrap}
+    const groupRowRefs  = new Map();  // gid -> {badgeEl}
 
     let routeLayer = null;
     let routingToUid = null;
 
-    // ===== Sharing =====
-    // 3) kiểm tra lại on/off: icon + push realtime phải theo sharing
-    let sharing = false;
-
-    function makeAvatarIcon(photoURL, isMe, isSharing){
+    function makeAvatarIcon(photoURL, isMe, isSharing=true){
       const ring = isSharing ? (isMe ? "ring-me" : "ring-friend") : "ring-off";
       return L.divIcon({
         className:"avatar-marker",
@@ -684,7 +705,7 @@
 
     function upsertMyMarker(lat,lng){
       const pos=[lat,lng];
-      const icon = makeAvatarIcon(me?.photoURL, true, sharing);
+      const icon = makeAvatarIcon(me?.photoURL, true, true);
       if(!myMarker){
         myMarker = L.marker(pos,{icon}).addTo(map).bindPopup("<b>📍 Bạn đang ở đây</b>");
       }else{
@@ -772,7 +793,6 @@
       );
     }
 
-    // Push realtime lên RTDB (throttle 2s) - chỉ khi sharing=true
     async function pushLiveLocation(force=false){
       if(!me || !sharing || !lastPos) return;
       const now = Date.now();
@@ -788,9 +808,7 @@
           name: me.displayName || "",
           photoURL: me.photoURL || ""
         });
-      }catch(e){
-        console.error("pushLiveLocation error:", e);
-      }
+      }catch(e){ console.error("pushLiveLocation error:", e); }
     }
 
     async function pushShareOff(){
@@ -802,18 +820,13 @@
           name: me.displayName || "",
           photoURL: me.photoURL || ""
         });
-      }catch(e){
-        console.error("pushShareOff error:", e);
-      }
+      }catch(e){ console.error("pushShareOff error:", e); }
     }
 
     function updateMyPos(pos){
       lastPos = { lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now() };
       upsertMyMarker(lastPos.lat,lastPos.lng);
-
-      // realtime chỉ khi sharing ON
       pushLiveLocation(false);
-
       if(routingToUid) drawRouteTo(routingToUid, false);
     }
 
@@ -929,7 +942,7 @@
       });
     }
 
-    // Best effort flush khi ẩn/đóng tab
+    // ===== Lifecycle flush =====
     function bindLifecycleHooks(){
       const flush = async ()=>{
         try{
@@ -942,36 +955,85 @@
       });
     }
 
-    async function setSharingUI(on){
-      sharing = !!on;
+    // ===== Sharing =====
+    let sharing=false;
 
-      const btn = $("btnToggleShare");
-      const label = $("shareDesc");
+    async function setSharingUI(on){
+      sharing=!!on;
+      const btn=$("btnToggleShare");
+      const label=$("shareDesc");
 
       if(sharing){
-        btn.textContent="Tắt";
-        btn.className="btn danger";
+        btn.textContent="Tắt"; btn.className="btn danger";
         label.textContent="🟢 Đang chia sẻ.";
         if(lastPos) await pushLiveLocation(true);
+
+        // ✅ nếu mất mạng/đóng app -> set sharing false
+        const myLiveRef = ref(rtdb, liveLocPath(me.uid));
+        await onDisconnect(myLiveRef).set({
+          sharing:false,
+          updatedAt: Date.now(),
+          name: me.displayName || "",
+          photoURL: me.photoURL || ""
+        });
+
       }else{
-        btn.textContent="Bật";
-        btn.className="btn success";
+        btn.textContent="Bật"; btn.className="btn success";
         label.textContent="⚪ Đang ẩn.";
         await pushShareOff();
       }
 
-      // Backup Firestore locations (tuỳ chọn)
+      // backup Firestore locations
       if (me) {
         const payload = { sharing, updatedAt: serverTimestamp() };
         if (sharing && lastPos) { payload.lat = lastPos.lat; payload.lng = lastPos.lng; }
         await setDoc(doc(db, "locations", me.uid), payload, { merge: true });
       }
 
-      // cập nhật icon marker của mình theo sharing
       if(lastPos && me) upsertMyMarker(lastPos.lat,lastPos.lng);
     }
 
-    // ===== Friends Requests =====
+    // ===== Notification toggle =====
+    function refreshNotiUI(){
+      const btn = $("btnToggleNoti");
+      const desc = $("notiDesc");
+      const p = Notification?.permission;
+      if(!Notification){
+        btn.textContent="Không hỗ trợ"; btn.className="btn secondary";
+        desc.textContent="Trình duyệt không hỗ trợ Notification.";
+        return;
+      }
+      if(p === "granted"){
+        btn.textContent="Đã bật"; btn.className="btn success";
+        desc.textContent="✅ Đã cấp quyền. Khi có tin nhắn mới sẽ hiện thông báo (khi app đang chạy/ẩn tab).";
+      }else if(p === "denied"){
+        btn.textContent="Bị chặn"; btn.className="btn danger";
+        desc.textContent="❌ Bạn đã chặn. Vào cài đặt trình duyệt để bật lại.";
+      }else{
+        btn.textContent="Bật"; btn.className="btn secondary";
+        desc.textContent="Cấp quyền để nhận thông báo khi có tin nhắn mới.";
+      }
+    }
+
+    $("btnToggleNoti").onclick = async ()=>{
+      if(!Notification) return toast("Trình duyệt không hỗ trợ Notification");
+      if(Notification.permission === "granted") return toast("Đã bật rồi");
+      const p = await Notification.requestPermission();
+      refreshNotiUI();
+      if(p === "granted") toast("✅ Đã bật thông báo!");
+      else toast("Bạn chưa cấp quyền");
+    };
+
+    function maybeNotify(title, body, icon){
+      try{
+        if(!Notification) return;
+        if(Notification.permission !== "granted") return;
+        if(document.visibilityState === "visible") return; // đang mở app thì thôi (đỡ spam)
+        new Notification(title || "Tin nhắn mới", { body: body || "", icon: icon || safeAva("") });
+      }catch{}
+    }
+
+    // ===== Friends + Locations =====
     $("btnSendRequest").onclick = async ()=>{
       const email=$("friendEmail").value.trim();
       if(!email) return toast("Chưa nhập email!");
@@ -984,15 +1046,13 @@
         });
         toast("Đã gửi lời mời!");
         $("friendEmail").value="";
-      }catch(e){ toast("Lỗi: " + (e.message || e)); }
+      }catch(e){ toast("Lỗi: " + e.message); }
     };
 
     let unsubIncoming=null;
     let unsubFriends=null;
-    let unsubGroups=null;
-
-    const unsubLocs=new Map();   // uid -> unsubscribe fn (location)
-    const unsubStatus=new Map(); // uid -> unsubscribe fn (presence)
+    const unsubLocs=new Map();
+    const unsubStatus=new Map();
 
     function listenIncoming(){
       if(unsubIncoming) unsubIncoming();
@@ -1033,7 +1093,6 @@
               users: { [me.uid]: true, [r.from]: true },
               createdAt: serverTimestamp()
             }, { merge: true });
-
             await attachFriendLocationListener(r.from);
             await attachFriendPresenceListener(r.from);
             toast("Đã chấp nhận!");
@@ -1054,17 +1113,28 @@
 
       const stRef = ref(rtdb, statusPath(fid));
       const handler = (snap)=>{
-        if(!snap.exists()) friendPresence.delete(fid);
-        else friendPresence.set(fid, snap.val() || {});
+        if(!snap.exists()){
+          friendPresence.delete(fid);
+        }else{
+          friendPresence.set(fid, snap.val() || {});
+        }
+
+        // ✅ update UI row if exists
+        const row = friendRowRefs.get(fid);
+        if(row?.statusEl){
+          const pr = friendPresence.get(fid);
+          const isOn = pr?.state === "online";
+          row.statusEl.textContent = isOn ? "🟢 Online" : "⚪ Offline";
+        }
+
+        // refresh popup
         const mk = friendMarkers.get(fid);
         if(mk) mk.setPopupContent(friendPopupHtml(fid));
       };
-
       onValue(stRef, handler, (err)=>console.error("presence listener err:", err));
       unsubStatus.set(fid, ()=> off(stRef, "value", handler));
     }
 
-    // Listen vị trí bạn bè từ RTDB liveLocations/<uid>
     async function attachFriendLocationListener(fid){
       if(unsubLocs.has(fid)) return;
       await getUserInfo(fid);
@@ -1125,6 +1195,8 @@
 
       friendLocs.clear();
       friendPresence.clear();
+      friendRowRefs.clear();
+      groupRowRefs.clear();
 
       friendMarkers.forEach((m,uid)=>removeFriendMarker(uid));
       clearRoute();
@@ -1177,6 +1249,10 @@
       updateGroupBarUI();
     };
 
+    // ===== Groups (Firestore) =====
+    let unsubGroups = null;
+    const groupCache = new Map(); // gid -> {name, members}
+
     $("btnCreateGroupFromSelected").onclick = async ()=>{
       try{
         const name = $("groupName2").value.trim();
@@ -1203,6 +1279,87 @@
       }
     };
 
+    function setBadge(badgeEl, n){
+      if(!badgeEl) return;
+      const v = Number(n||0);
+      if(v <= 0){
+        badgeEl.classList.add("hidden");
+        badgeEl.textContent = "";
+      }else{
+        badgeEl.classList.remove("hidden");
+        badgeEl.textContent = v > 99 ? "99+" : String(v);
+      }
+    }
+
+    // ===== Inbox listener (badge + notify) =====
+    let unsubInbox = null;
+    const inboxState = new Map(); // key -> entry
+    const prevInboxUnread = new Map(); // key -> unread
+
+    function listenInbox(){
+      if(unsubInbox) { try{unsubInbox();}catch{} }
+      inboxState.clear();
+      prevInboxUnread.clear();
+
+      const inRef = ref(rtdb, inboxPath(me.uid));
+      const handler = (snap)=>{
+        const data = snap.val() || {};
+        // rebuild map
+        for(const k of Object.keys(data)){
+          const entry = data[k] || {};
+          inboxState.set(k, entry);
+
+          const oldUnread = prevInboxUnread.get(k) || 0;
+          const newUnread = Number(entry.unread||0);
+
+          // update friend badges
+          if(entry.type === "dm" && entry.peerUid){
+            const row = friendRowRefs.get(entry.peerUid);
+            if(row?.badgeEl) setBadge(row.badgeEl, newUnread);
+          }
+          // update group badges
+          if(entry.type === "group" && entry.groupId){
+            const row = groupRowRefs.get(entry.groupId);
+            if(row?.badgeEl) setBadge(row.badgeEl, newUnread);
+          }
+
+          // notify if new unread increased (from others)
+          if(newUnread > oldUnread && entry.lastFrom && entry.lastFrom !== me.uid){
+            const title = entry.title || "Tin nhắn mới";
+            const body  = entry.lastText || "";
+            const icon  = entry.photoURL || safeAva("");
+            maybeNotify(title, body, icon);
+          }
+
+          prevInboxUnread.set(k, newUnread);
+        }
+
+        // also clear badges for removed keys
+        for(const k of Array.from(prevInboxUnread.keys())){
+          if(!(k in data)){
+            prevInboxUnread.delete(k);
+          }
+        }
+      };
+      onValue(inRef, handler, (err)=>console.error("inbox listener error:", err));
+      unsubInbox = ()=> off(inRef, "value", handler);
+    }
+
+    async function clearInboxUnreadForDM(peerUid){
+      const dmId = friendDocId(me.uid, peerUid);
+      const key = inboxKeyDM(dmId);
+      try{
+        await update(ref(rtdb, `${inboxPath(me.uid)}/${key}`), { unread: 0, readAt: Date.now() });
+      }catch{}
+    }
+    async function clearInboxUnreadForGroup(groupId){
+      const key = inboxKeyGroup(groupId);
+      try{
+        await update(ref(rtdb, `${inboxPath(me.uid)}/${key}`), { unread: 0, readAt: Date.now() });
+      }catch{}
+    }
+
+    // ===== Friends list =====
     function listenFriends() {
       if (unsubFriends) unsubFriends();
       const qy = query(collection(db, "friends"), where(`users.${me.uid}`, "==", true));
@@ -1233,6 +1390,7 @@
 
               friendLocs.delete(fid);
               friendPresence.delete(fid);
+              friendRowRefs.delete(fid);
               removeFriendMarker(fid);
               if (routingToUid === fid) clearRoute();
 
@@ -1244,12 +1402,14 @@
           for (const fid of friends) {
             const u = await getUserInfo(fid);
 
-            const pr = friendPresence.get(fid);
-            const isOn = pr?.state === "online";
-            const statusTxt = isOn ? "🟢 Online" : "⚪ Offline";
-
             const div = document.createElement("div");
             div.className = "list-item";
+
+            // chat button + badge
+            const dmId = friendDocId(me.uid, fid);
+            const key = inboxKeyDM(dmId);
+            const unread = Number(inboxState.get(key)?.unread || 0);
+
             div.innerHTML = `
               <div class="list-left">
                 <input class="friend-check" type="checkbox" data-uid="${fid}">
@@ -1257,17 +1417,29 @@
                 <div class="list-info" style="cursor:pointer;">
                   <b>${u.displayName || "Bạn bè"}</b>
                   <small>${u.email || ("UID: " + fid.slice(0,8) + "...")}</small>
-                  <small>${statusTxt}</small>
+                  <small class="st">⚪ Offline</small>
                 </div>
               </div>
-              <div style="display:flex; gap:8px; flex: 0 0 auto;">
-                <button class="btn secondary" style="padding:6px 10px; font-size:12px">💬</button>
+              <div style="display:flex; gap:8px; flex: 0 0 auto; align-items:center;">
+                <span class="icon-btnwrap">
+                  <button class="btn secondary" style="padding:6px 10px; font-size:12px">💬</button>
+                  <span class="badge ${unread>0?'':'hidden'}">${unread>0? (unread>99?'99+':unread):''}</span>
+                </span>
                 <button class="btn secondary" style="padding:6px 10px; font-size:12px">🧭</button>
                 <button class="btn danger" style="padding:6px 10px; font-size:12px">Xóa</button>
               </div>
             `;
 
             bindFriendCheckbox(div);
+
+            const statusEl = div.querySelector(".st");
+            const badgeEl  = div.querySelector(".badge");
+            friendRowRefs.set(fid, { statusEl, badgeEl });
+
+            // set initial presence if already have
+            const pr = friendPresence.get(fid);
+            const isOn = pr?.state === "online";
+            statusEl.textContent = isOn ? "🟢 Online" : "⚪ Offline";
 
             const btnChat = div.querySelectorAll("button")[0];
             const btnRoute = div.querySelectorAll("button")[1];
@@ -1298,17 +1470,26 @@
       );
     }
 
+    // ===== Groups list =====
     function listenGroups(){
       if(unsubGroups) unsubGroups();
+      groupCache.clear();
+
       const qy = query(collection(db,"groups"), where(`members.${me.uid}`, "==", true));
       unsubGroups = onSnapshot(qy, (snap)=>{
         const list = $("groupList");
         list.innerHTML="";
         $("groupEmpty").style.display = snap.empty ? "block" : "none";
 
+        groupRowRefs.clear();
+
         snap.forEach(d=>{
           const g = d.data() || {};
           const gid = d.id;
+          groupCache.set(gid, { name: g.name || "Nhóm chat", members: g.members || {} });
+
+          const key = inboxKeyGroup(gid);
+          const unread = Number(inboxState.get(key)?.unread || 0);
 
           const div = document.createElement("div");
           div.className = "list-item";
@@ -1320,12 +1501,19 @@
                 <small>ID: ${gid.slice(0,8)}...</small>
               </div>
             </div>
-            <div style="display:flex; gap:8px; flex:0 0 auto;">
-              <button class="btn secondary" style="padding:6px 10px; font-size:12px">💬</button>
+            <div style="display:flex; gap:8px; flex:0 0 auto; align-items:center;">
+              <span class="icon-btnwrap">
+                <button class="btn secondary" style="padding:6px 10px; font-size:12px">💬</button>
+                <span class="badge ${unread>0?'':'hidden'}">${unread>0? (unread>99?'99+':unread):''}</span>
+              </span>
             </div>
           `;
+          const btnChat = div.querySelector("button");
+          const badgeEl = div.querySelector(".badge");
+          groupRowRefs.set(gid, { badgeEl });
+
           div.querySelector(".list-left").onclick = ()=> openGroup(gid, g.name || "Nhóm chat");
-          div.querySelector("button").onclick = ()=> openGroup(gid, g.name || "Nhóm chat");
+          btnChat.onclick = ()=> openGroup(gid, g.name || "Nhóm chat");
           list.appendChild(div);
         });
       });
@@ -1333,13 +1521,13 @@
 
     // ===== Chat (RTDB) =====
     let currentChatType = null;        // "dm" | "group"
-    let currentChatId = null;
+    let currentChatId = null;          // dmId hoặc groupId
     let currentMsgsRef = null;
 
     let currentAddedHandler = null;
     let currentChangedHandler = null;
 
-    let currentPeerUid = null;
+    let currentPeerUid = null;         // dm only
     let lastOutgoingKey = null;
 
     const chatBackdrop=$("chatBackdrop");
@@ -1358,6 +1546,16 @@
     function chatPath(){
       if(currentChatType==="dm") return `chats/${currentChatId}/messages`;
       if(currentChatType==="group") return `groupChats/${currentChatId}/messages`;
+      return null;
+    }
+    function chatMetaPath(){
+      if(currentChatType==="dm") return `chats/${currentChatId}/meta`;
+      if(currentChatType==="group") return `groupChats/${currentChatId}/meta`;
+      return null;
+    }
+    function chatInboxKey(){
+      if(currentChatType==="dm") return inboxKeyDM(currentChatId);
+      if(currentChatType==="group") return inboxKeyGroup(currentChatId);
       return null;
     }
 
@@ -1405,10 +1603,18 @@
       try{
         const p = chatPath();
         if(!p) return;
+
+        // mark read in message
         await update(ref(rtdb, `${p}/${snapKey}`),{
           [`readBy/${me.uid}`]: true,
           [`readAt/${me.uid}`]: Date.now()
         });
+
+        // clear unread in inbox for this chat
+        const k = chatInboxKey();
+        if(k){
+          await update(ref(rtdb, `${inboxPath(me.uid)}/${k}`), { unread: 0, readAt: Date.now() });
+        }
       }catch(e){
         console.error("markRead error:", e);
       }
@@ -1421,7 +1627,7 @@
       if(currentMsgsRef && currentAddedHandler) off(currentMsgsRef, "child_added", currentAddedHandler);
       if(currentMsgsRef && currentChangedHandler) off(currentMsgsRef, "child_changed", currentChangedHandler);
 
-      currentMsgsRef = rQuery(ref(rtdb, p), limitToLast(120));
+      currentMsgsRef = rQuery(ref(rtdb, p), limitToLast(160));
 
       currentAddedHandler = async (snap)=>{
         const m = snap.val();
@@ -1445,8 +1651,12 @@
         }
       };
 
-      onChildAdded(currentMsgsRef, currentAddedHandler);
-      onChildChanged(currentMsgsRef, currentChangedHandler);
+      onValue(currentMsgsRef, ()=>{}, ()=>{}); // giữ ref "sống"
+      // child events:
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js").then(mod=>{
+        mod.onChildAdded(currentMsgsRef, currentAddedHandler);
+        mod.onChildChanged(currentMsgsRef, currentChangedHandler);
+      });
     }
 
     function openChatUI({title, sub, ava, typeChip, showRouteBtn}){
@@ -1468,7 +1678,7 @@
       $("btnChatRoute").style.display = showRouteBtn ? "inline-flex" : "none";
     }
 
-    function openDM(uid){
+    async function openDM(uid){
       if(!me) return;
 
       currentChatType = "dm";
@@ -1486,10 +1696,14 @@
       });
 
       $("btnChatRoute").onclick = ()=> startRoutingTo(uid);
+
+      // ✅ clear badge
+      await clearInboxUnreadForDM(uid);
+
       attachChatListeners();
     }
 
-    function openGroup(groupId, groupName){
+    async function openGroup(groupId, groupName){
       if(!me) return;
 
       currentChatType = "group";
@@ -1505,14 +1719,28 @@
         showRouteBtn: false
       });
 
+      // ✅ clear badge
+      await clearInboxUnreadForGroup(groupId);
+
       attachChatListeners();
     }
 
     function closeChat(){
       chatBackdrop.classList.remove("show");
 
-      if(currentMsgsRef && currentAddedHandler) off(currentMsgsRef, "child_added", currentAddedHandler);
-      if(currentMsgsRef && currentChangedHandler) off(currentMsgsRef, "child_changed", currentChangedHandler);
+      // detach
+      try{
+        if(currentMsgsRef && currentAddedHandler){
+          import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js").then(mod=>{
+            mod.off(currentMsgsRef, "child_added", currentAddedHandler);
+          });
+        }
+        if(currentMsgsRef && currentChangedHandler){
+          import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js").then(mod=>{
+            mod.off(currentMsgsRef, "child_changed", currentChangedHandler);
+          });
+        }
+      }catch{}
 
       currentChatType = null;
       currentChatId = null;
@@ -1529,31 +1757,139 @@
     $("btnChatClose").onclick = closeChat;
     chatBackdrop.onclick = (e)=>{ if(e.target===chatBackdrop) closeChat(); };
 
+    // ===== Inbox update helpers (badge + last message) =====
+    async function upsertInboxForMe(key, payload){
+      // update sender inbox (unread 0)
+      await update(ref(rtdb, `${inboxPath(me.uid)}/${key}`), {
+        ...payload,
+        unread: 0,
+        readAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+
+    async function incInboxForUser(uid, key, payload){
+      const baseRef = ref(rtdb, `${inboxPath(uid)}/${key}`);
+      // merge payload + unread++
+      await update(baseRef, { ...payload, updatedAt: Date.now() });
+      await runTransaction(ref(rtdb, `${inboxPath(uid)}/${key}/unread`), (cur)=>{
+        const v = Number(cur||0);
+        return v + 1;
+      });
+    }
+
     async function sendMessage(){
       const text = chatInput.value.trim();
       if(!text) return;
       if(!me || !currentChatType || !currentChatId) return;
 
       chatInput.value = "";
+
       const p = chatPath();
-      if(!p) return;
+      const metaP = chatMetaPath();
+      if(!p || !metaP) return;
+
+      const now = Date.now();
 
       try{
         const msgRef = push(ref(rtdb, p));
         const payload = {
           from: me.uid,
           text,
-          ts: Date.now(),
+          ts: now,
           serverTs: rtdbServerTimestamp(),
           name: me.displayName || "",
           photoURL: me.photoURL || "",
           readBy: { [me.uid]: true },
-          readAt: { [me.uid]: Date.now() }
+          readAt: { [me.uid]: now }
         };
         await set(msgRef, payload);
 
+        // update meta (optional)
+        await update(ref(rtdb, metaP), {
+          lastText: text,
+          lastFrom: me.uid,
+          lastFromName: me.displayName || "",
+          lastTs: now
+        });
+
         lastOutgoingKey = msgRef.key;
         seenLine.textContent = "";
+
+        // ✅ update inbox (badge) like messenger
+        if(currentChatType === "dm"){
+          const peerUid = currentPeerUid;
+          const dmId = currentChatId;
+          const key = inboxKeyDM(dmId);
+
+          const u = userCache.get(peerUid) || {};
+          const myTitleForPeer = me.displayName || "Bạn bè";
+          const myPhoto = me.photoURL || "";
+
+          const peerTitleForMe = u.displayName || "Bạn bè";
+          const peerPhotoForMe = u.photoURL || "";
+
+          // sender inbox (me)
+          await upsertInboxForMe(key, {
+            type:"dm",
+            chatId: dmId,
+            peerUid,
+            title: peerTitleForMe,
+            photoURL: peerPhotoForMe,
+            lastText: text,
+            lastFrom: me.uid,
+            lastFromName: me.displayName || "",
+            lastTs: now
+          });
+
+          // receiver inbox (peer) => unread++
+          await incInboxForUser(peerUid, key, {
+            type:"dm",
+            chatId: dmId,
+            peerUid: me.uid,
+            title: myTitleForPeer,
+            photoURL: myPhoto,
+            lastText: text,
+            lastFrom: me.uid,
+            lastFromName: me.displayName || "",
+            lastTs: now
+          });
+
+        }else if(currentChatType === "group"){
+          const gid = currentChatId;
+          const key = inboxKeyGroup(gid);
+          const g = groupCache.get(gid) || { name:"Nhóm chat", members:{} };
+          const members = Object.keys(g.members || {});
+          const groupTitle = g.name || "Nhóm chat";
+
+          // sender inbox (me) unread 0
+          await upsertInboxForMe(key, {
+            type:"group",
+            groupId: gid,
+            title: groupTitle,
+            photoURL: "https://www.gravatar.com/avatar/?d=identicon&s=96",
+            lastText: text,
+            lastFrom: me.uid,
+            lastFromName: me.displayName || "",
+            lastTs: now
+          });
+
+          // each member (except sender) unread++
+          for(const uid of members){
+            if(uid === me.uid) continue;
+            await incInboxForUser(uid, key, {
+              type:"group",
+              groupId: gid,
+              title: groupTitle,
+              photoURL: "https://www.gravatar.com/avatar/?d=identicon&s=96",
+              lastText: text,
+              lastFrom: me.uid,
+              lastFromName: me.displayName || "",
+              lastTs: now
+            });
+          }
+        }
+
       }catch(e){
         toast("Lỗi gửi tin: " + (e.message || e));
       }
@@ -1564,15 +1900,10 @@
 
     // ===== Auth =====
     $("btnLogin").onclick = ()=>signInWithPopup(auth, provider).catch(e=>toast(e.message));
-    $("btnLogout").onclick = async ()=>{
-      try{
-        await setSharingUI(false);
-      }catch{}
-      await signOut(auth);
-    };
+    $("btnLogout").onclick = ()=>{ setSharingUI(false); signOut(auth); };
     $("btnToggleShare").onclick = ()=>setSharingUI(!sharing);
 
-    // ===== UI switch =====
+    // ===== UI state helpers =====
     function showLoading(){
       $("loadingScreen").classList.remove("hidden");
       $("loginScreen").classList.add("hidden");
@@ -1589,33 +1920,31 @@
       $("appScreen").classList.remove("hidden");
     }
 
-    // ===== onAuth (4) Loading khi xác nhận đăng nhập =====
+    // ===== onAuth =====
     showLoading();
-    let authResolvedOnce = false;
+    let authResolved = false;
 
     onAuthStateChanged(auth, async (user)=>{
-      me = user;
+      me=user;
 
-      // lần đầu callback => auth check xong
-      if(!authResolvedOnce){
-        authResolvedOnce = true;
+      // first resolve -> stop loading
+      if(!authResolved){
+        authResolved = true;
       }
 
       if(!me){
-        // reset app state
+        showLogin();
         stopGeolocationWatch();
         detachAllFriendLocListeners();
         closeChat();
+        if(unsubInbox){ try{unsubInbox();}catch{} unsubInbox=null; }
         if(myMarker){ map.removeLayer(myMarker); myMarker=null; }
-
         selectedFriends.clear();
         updateGroupBarUI();
-
-        showLogin();
+        refreshNotiUI();
         return;
       }
 
-      // logged in
       showApp();
 
       $("topName").textContent = me.displayName || "Me";
@@ -1629,12 +1958,17 @@
       await ensureUserDoc(me);
       await ensurePublicEmailIndex(me);
 
+      // presence + lifecycle
       await startPresence();
       bindLifecycleHooks();
 
+      // inbox
+      listenInbox();
+
+      // location
       startGeolocationWatch();
 
-      // load share state từ Firestore (backup)
+      // load share state (backup)
       const loc = await getDoc(doc(db,"locations",me.uid));
       if(loc.exists()) await setSharingUI(!!loc.data().sharing);
       else await setSharingUI(false);
@@ -1643,9 +1977,14 @@
       listenFriends();
       listenGroups();
 
+      refreshNotiUI();
+
       setTab("map");
       toast("Chào " + (me.displayName || "bạn"));
     });
   </script>
+
+  <!-- ✅ QUICK NOTE: nếu group create bị "Missing or insufficient permissions"
+       -> cần sửa Firestore rules. -->
 </body>
 </html>
